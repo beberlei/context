@@ -17,6 +17,7 @@ Features:
 * Pluggable delivery mechanisms (Web, CLI, MessageQueues, Unit-Tests, ..)  map to the same model
 * Command pattern approach, allowing to keep transactional log of the domain events. (Do, Undo, Redo)
 * Hooks for Validation/Input Filtering
+* Seperate testing for controller-patterns from model
 
 ## Terminology
 
@@ -154,7 +155,7 @@ operations and directly map from request/routing into a context (works for Symfo
 Whenever either the context or an observer event is invoked the arguments are resolved
 using the Reflection API:
 
-    * Gather possible arguments from options to Boundary invocation or by retrieving request variables.
+    * Gather possible arguments from options 'variables' or by retrieving request variables.
     * Get all arguments definitions of the method/function.
     * Match variables by type-hints from the list of potential arguments. 
     * Match variables by name from the list of potential arguments.
@@ -165,6 +166,7 @@ using the Reflection API:
 There are some special cases:
 
     * The 'success' closure gets passed the return value of the 'context' when not executed explicitly.
+    * ContextObserver is an interface that get injected when type-hinted.
 
 Possible argument transformation:
 
@@ -358,7 +360,43 @@ With an abstraction layer over the boundary and re-use of behavior this could si
         }
     }
 
+## Observer
+
+If you typehint for `Context\ContextObserver` interface in your model you get the observer injected:
+
+    <?php
+    interface ContextObserver
+    {
+        function notify($event, array $variables);
+    }
+
+    class RegisterUserContext
+    {
+        public function register(ContextObserver $observer)
+        {
+            //...
+            $observer->notify('some_event', array('foo' => 'bar'));
+            //...
+        }
+    }
+
+
 ## Testing
 
 Context provides a very simple boundary that does require any dependencies. You can use it to execute
 Unit-/Functional-Tests for your context objects.
+
+    <?php
+
+    class RegisterUserContextTest extends PHPUnit_Framework_TestCase
+    {
+        public function testRegister()
+        {
+            $boundary = new SimpleBoundary();
+            $value = $boundary->invoke(array(
+
+            ));
+
+            // assertions on $value
+        }
+    }
