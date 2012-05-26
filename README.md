@@ -41,6 +41,17 @@ model (subject) to listen to success and failure states.
 
 A context is any PHP callable (no-base class?) that handles a use-case. Its execution is wrapped in a boundary.
 
+### Entity-Boundary-Interactor
+
+Pattern that describes how to seperate delivery mechanisms from model through boundaries.
+Interactors contain the behavior of the model, entity represent the static data model.
+
+### Data-Context-Interaction
+
+Pattern that helps solve the mental-model mismatch between static data and behavior.
+The Interactor from EBI-Pattern is a context that manages a use-case and the data
+objects are "casted into" roles containing behavior. This can be done through aggregation.
+
 ## Simple Example: Symfony View Resource Request
 
 In this example a domain object is fetched using a service from a locator and then
@@ -380,6 +391,9 @@ If you typehint for `Context\ContextObserver` interface in your model you get th
         }
     }
 
+By default Context create an observer that will invoke closures from the options
+array passed to the `Boundary::invoke`` method. You can override the observer
+by setting 'observer' key at boundary invocation.
 
 ## Testing
 
