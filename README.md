@@ -394,7 +394,7 @@ Unit-/Functional-Tests for your context objects.
         {
             $boundary = new SimpleBoundary();
             $value = $boundary->invoke(array(
-
+                'variables' => array('user' => new User()),
             ));
 
             // assertions on $value
