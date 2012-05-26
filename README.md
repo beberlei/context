@@ -1,28 +1,49 @@
 # Context
 
-Thin PHP library to help implement Data-Context-Interaction/Entity-Boundary-Interceptor Patterns and have a simple way to move logic from controller to the model layer.
-It is a framework for the model layer.
+Thin PHP library to help implement Data-Context-Interaction/
+Entity-Boundary-Interceptor Patterns and have a simple way to move logic from
+controller to the model layer. It is a "framework for the model".
 
-This library tries to solve problems with todays Web/MVC applications, which are too focused on the controller, leading to tight coupling and painful testing experience.
+This library tries to solve problems with todays Web/MVC applications, which
+are too focused on the controller, leading to tight coupling and painful
+reusability, testing and refactoring experience.
 
-Requirements:
+Features:
 
-* Solve mapping HTTP-Request (or any input for that matter) onto model-request
+* Support mapping HTTP-Request (or any input for that matter) onto model-request
 * Inject observer that notifies boundary of different model results (subject).
-* Allow for Validation/Input Filtering
-* Simplify transactions around work
-* Transform model exceptions into exceptions/error handling of MVC.
-* Allow different boundaries to be implemented (Web, CLI, MessageQueues, Unit-Tests, ..) and map to the same model.
+* Simplify transaction-management
+* Consistent transformation of model exceptions into exceptions/error handling of application.
+* Pluggable delivery mechanisms (Web, CLI, MessageQueues, Unit-Tests, ..)  map to the same model
 * Command pattern approach, allowing to keep transactional log of the domain events. (Do, Undo, Redo)
+* Hooks for Validation/Input Filtering
 
-## A Context
+## Terminology
 
-A context is any PHP callable that handles a use-case. It is executed from the context-engine and
-wrapped into transactions, request-to-model mapping and much more.
+### Model
+
+Layer where business logic and access to persistence happens. Can be seperated
+into two parts Interactor and Entity.
+
+### Delivery Mechanism
+
+The delivery mechanism is a way input/output and data processing work in your
+application: Human/Machine, Asynchroneous/Synchroneus, HTTP/REST/CLI/GUI, Client/Server, and so on.
+
+### Boundary
+
+Seperates Input from model layer by describing how to map delivery mechanism
+inputs into a request against your model. The boundary acts an observer to
+model (subject) to listen to success and failure states.
+
+### Context (Interaction)
+
+A context is any PHP callable (no-base class?) that handles a use-case. Its execution is wrapped in a boundary.
 
 ## Simple Example: Symfony View Resource Request
 
-In this example a resource is accessed that corresponds to one object in the domain layer.
+In this example a domain object is fetched using a service from a locator and then
+rendered as HTML page. Error handling is implemented in terms of the framework.
 
     <?php
 
@@ -45,26 +66,26 @@ In this example a resource is accessed that corresponds to one object in the dom
 
 In this example there is absolutely no abstraction between model, persistence and controller.
 To achieve some way of abstraction the entity manager service + finder has to be hidden behind
-an interface:
+an interface + implementation:
 
     <?php
     class UserRepository implements UserRepositoryInterface
     {
-        private $em;
-        // constructor omitted
+        private $em; // constructor omitted
+
         public function find($id)
         {
             $user = $this->em->find('MyApplication\Entity\User', $id);
 
-            if (!$user) {
-                throw new EntityNotFoundException('MyApplication\Entity\User', $id);
+            if ( ! $user) {
+                throw new UserNotFoundException($id);
             }
             
             return $user;
         }
     }
 
-The controller could then be rewritten using a command/work pattern using some anonymous functions:
+The controller could then be rewritten using a command/work pattern:
 
     <?php
 
@@ -72,30 +93,20 @@ The controller could then be rewritten using a command/work pattern using some a
     {
         public function viewAction($id)
         {
-            $repository = $this->container->get('user_repository');
+            $repository = $this->container->get('user_repository'); // our service
 
-            return $this->work(array(
-                'context' =>  function ($id) use ($repository) {
-                    return $repository->find($id);
-                },
+            $boundary = new Symfony2Boundary(); // probably needs dependencies
+            return $boundary->invoke(array(
+                'context' => array($repository, 'find'),
                 'success' => function (User $User) {
                     return $this->render('MyApplicationBundle:User:view.html.twig', array(
                         'user' => $user
                     ));
                 },
-                'failure' => function() {
+                'exception' => function($e) {
                     throw new HttpNotFoundException();
                 }
             ));
-        }
-
-        protected function work(array $options)
-        {
-            try {
-
-            } catch(\Exception $e) {
-
-            }
         }
     }
 
@@ -105,12 +116,13 @@ different controller parts, again gaining reusable code:
     <?php
     abstract class EntityController extends Controller
     {
-        public function viewSuccess($template, $entity, $name)
+        public function viewSuccess($entity)
         {
-            return $this->render($template, array($name => $entity));
+            $template = $this->getTemplateFor($entity);
+            return $this->render($template, array('object' => $entity));
         }
 
-        public function viewFailure()
+        public function onException($e)
         {
             throw new HttpNotFoundException();
         }
@@ -122,22 +134,53 @@ different controller parts, again gaining reusable code:
         {
             $repository = $this->container->get('user_repository');
 
-            return $this->work(array(
-                'context' =>  function ($id) use ($repository) {
-                    return $repository->find($id);
-                },
-                'success' => array($this, 'viewSuccess'),
-                'failure' => array($this, 'viewFailure'),
+            $boundary = new Symfony2Boundary();
+            return $boundary->invoke(array(
+                'context'   => array($repository, 'find'),
+                'success'   => array($this, 'viewSuccess'),
+                'exception' => array($this, 'onException'),
+                'template'  => 'MyApplicationBundle:User:view.html.twig',
             ));
         }
     }
 
+Outlook: You could even get rid of the 'exception' key by defining this globally in the framework
+once and only overriding this observer callback for specific use-cases. Depending
+on the framework you could even get rid of the controller layer completly for CRUD
+operations and directly map from request/routing into a context (works for Symfony2).
+
+## How does Input/Output Mapping work?
+
+Whenever either the context or an observer event is invoked the arguments are resolved
+using the Reflection API:
+
+    * Gather possible arguments from options to Boundary invocation or by retrieving request variables.
+    * Get all arguments definitions of the method/function.
+    * Match variables by type-hints from the list of potential arguments. 
+    * Match variables by name from the list of potential arguments.
+    * Throw exception if a variable cannot be matched and is required, use default otherwise.
+    * Transform value from its boundary representation into the requesed model representation.
+    * Invoke method/function with arguments.
+
+There are some special cases:
+
+    * The 'success' closure gets passed the return value of the 'context' when not executed explicitly.
+
+Possible argument transformation:
+
+    * String/Integer into DateTime
+    * Scalar/Array Primary Key into Object
+    * Scalar/Array into Value Object
+    * Array into New Object
+    * ...
+
+Open Question how to configure if an object is only mapped from an integer, not created/updated from an array?
 
 ## Complex Example: Symfony Form 
 
 Lets formulate the default "handle a form" in Symfony2 into "context"
 
-Here the "Symfony approved" way, example from the documentation:
+Here the "Symfony approved" way, an example from the documentation:
 
     <?php
 
@@ -189,7 +232,7 @@ and creating a new user. So a method minus the controller/view/transactional clu
         }
     }
 
-The form handling of the controller contains generic-reusable code:
+The form handling of the controller contains generic-reusable code for all forms in your application:
 
     <?php
 
@@ -197,29 +240,29 @@ The form handling of the controller contains generic-reusable code:
     {
         protected function execute(Context $context, array $options)
         {
-            $form = $this->createForm($options['type'], $options['data']);
+            $form = $this->createForm($options['type']);
+            $failureHandler = $options['failure'];
 
             if ($options['request']->getMethod() != 'POST') {
-                $failure = $options['failure'];
-                return $failure($form);
+                return $failureHandler($form);
             }
 
             $form->bindRequest($options['request']);
 
             if ( ! $form->isValid()) {
-                $failure = $options['failure'];
-                return $failure($form);
+                return $failureHandler($form);
             }
 
-            $args = $this->getContextArguments($context, $options['request'], $options['data']);
+            $args = $this->resolveContextArguments($context, $options['request']);
 
             try {
                 $ret = call_user_func_array(array($context, 'execute'), $args);
-                $success = $options['success'];
+                $successHandler = $options['success'];
 
-                return $success($ret);
+                return $successHandler($ret);
             } catch(\Exception $e) {
-                return $this->handleException($e, $context, $options);
+                $exceptionHandler = $options['exception'];
+                return $exceptionHandler($e, $form);
             }
         }
     }
@@ -227,16 +270,22 @@ The form handling of the controller contains generic-reusable code:
 The transactional code for a Doctrine EntityManager:
 
     <?php
-    class DoctrineOrmTransaction extends ContextTransaction
+    class DoctrineOrmTransaction implements ContextTransaction
     {
-        public function execute($boundary, $context, $options)
+        public function beginTransaction()
         {
             $this->entityManager->beginTransaction();
-            try {
-                $boundary->execute($context, $options);
-            } catch(\Exception $e) {
+        }
 
-            }
+        public function commit()
+        {
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+        }
+
+        public function rollback()
+        {
+            $this->entityManager->rollBack();
         }
     }
 
@@ -247,21 +296,20 @@ The controller is then without any abstraction over the boundary:
     {
         public function registerAction()
         {
-            $engine = $this->container->get('context.engine');
-            $engine->setBoundary(new SymfonyFormBoundary());
-            $engine->work(array(
+            $boundary = new SymfonyFormBoundary(); // deps missing
+            return $boundary->invoke(array(
                 'context' => new RegisterUserContext(),
-                'type' => new UserType(),
-                'data' => new User(),
+                'type'    => new UserType(),
                 'request' => $this->getRequest(),
-                'success' => function($user) {
-                    $mailer = $this->get('mailer');
+                'tx'      => $this->container->get('context.tx.doctrine_orm'),
+                'success' => function($user, $controller) {
+                    $mailer = $controller->get('mailer');
                     $mailer->send(...);
 
-                    $session = $this->get('session');
+                    $session = $controller->get('session');
                     $session->getFlashBag()->add('success', 'You have registered!');
 
-                    return $this->redirect($this->generateUrl('someroute'));
+                    return $controller->redirect($controller->generateUrl('someroute'));
                 },
                 'failure' => function($form) {
                     return $this->render(
@@ -280,13 +328,12 @@ With an abstraction layer over the boundary and re-use of behavior this could si
     {
         public function registerAction()
         {
-            $this->work(array(
+            $boundary = new SymfonyFormBoundary(); // deps missing
+            return $boundary->invoke(array(
+                // 'tx', 'request' injected automatically in SF2 context
                 'context' => new RegisterUserContext(),
                 'type' => new UserType(),
-                'data' => new User(),
                 'success' => array($this, 'sendMailFlashRedirectAction'),
-                // Or even since we know the context
-                // 'Bundle:RegistrationController:sendMailFlashRedirectAction'
                 'failure' => array($this, 'renderFailureResponseAction'),
             ));
         }
@@ -310,3 +357,8 @@ With an abstraction layer over the boundary and re-use of behavior this could si
             return $this->redirect($this->generateUrl('someroute'));
         }
     }
+
+## Testing
+
+Context provides a very simple boundary that does require any dependencies. You can use it to execute
+Unit-/Functional-Tests for your context objects.
