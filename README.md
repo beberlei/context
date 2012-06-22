@@ -1,30 +1,165 @@
 # Context
 
-Thin PHP library to help implement Data-Context-Interaction/
-Entity-Boundary-Interceptor Patterns and have a simple way to move logic from
-controller to the model layer. It is a "framework for the model".
+Small PHP library to help you shield your business-rules from the
+controller and presentation layers. To achieve this goal the Data-Context-Interaction
+and Entity-Boundary-Interceptor patterns are used. Context is a framework "for the model".
 
-This library tries to solve problems with todays Web/MVC applications, which
-are too focused on the controller, leading to tight coupling and painful
-reusability, testing and refactoring experience.
+This library tries to solve problems with todays Web/MVC applications and their 
+focus on the controller. Using MVC frameworks the "documented" way often leads
+to tight coupling and painful reusability, testing and refactoring experience.
 
-Features:
+Context does not interfere in your model. It offers a convenience wrapper around your model
+that acts as translation mechanism between presentation layer and model.
 
-* Support mapping HTTP-Request (or any input for that matter) onto model-request
-* Inject observer that notifies boundary of different model results (subject).
-* Simplify transaction-management
-* Consistent transformation of model exceptions into exceptions/error handling of application.
+## Features
+
+* Support mapping Requests (HTTP, Console, or any input for that matter) on model-request
+* Encourage Observers that notify presentation layer of different model results (subject).
+* Transparent transformation of model exceptions into application-level exceptions/errors
 * Pluggable delivery mechanisms (Web, CLI, MessageQueues, Unit-Tests, ..)  map to the same model
-* Command pattern approach, allowing to keep transactional log of the domain events. (Do, Undo, Redo)
+* Command pattern approach (Could allow to keep transactional log of the domain events: Do, Undo, Redo)
+* Simplify transaction-management
 * Hooks for Validation/Input Filtering
 * Seperate testing for controller-patterns from model
+
+## Example: Calculator
+
+This is a very simple README compatible example for a calculator.
+
+    class Calculator
+    {
+        public function square($x)
+        {
+            if ( ! is_numeric($x)) {
+                throw new \InvalidArgumentException("Input values are not numeric.");
+            }
+
+            return $x * $x;
+        }
+
+        public function statistics(array $numbers)
+        {
+            if (count($numbers) > count(array_filter($numbers, 'is_numeric'))) {
+                throw new \InvalidArgumentException("Input values are not numeric.");
+            }
+
+            $average           = array_sum($numbers) / count($numbers);
+            $square            = array_map(array($this, 'square'), $numbers);
+            $variance          = (array_sum($square) / count($square)) - $this->square($average);
+            $standardDeviation = sqrt($variance);
+
+            return array(
+                'numbers'           => $numbers,
+                'average'           => $average,
+                'variance'          => $variance,
+                'standardDeviation' => $standardDeviation,
+            );
+        }
+    }
+
+We want to implement a bunch of example applications on top of this model. During this
+experiment we will not change a single line of this model, yet make it usable from very
+different types of applications. Lets start with a completly unabstracted PHP/HTTP application:
+
+    <?php
+    $calculator = new Calculator();
+
+    if (isset($_GET['numbers'])) {
+        $context = new \Context\Engine();
+        $stats   = $context->execute(array(
+            'context' => array($calculator, 'statistics'),
+            'params'  => $_GET['numbers'],
+        ));
+
+        $html = <<<HTML
+<strong>Numbers:</strong> %s<br />
+<strong>Average:</strong> %s<br />
+<strong>Variance:</strong> %s<br />
+<strong>Standard Deviation:</strong> %s<br />
+HTML;
+
+        echo sprintf(
+            $html,
+            $stats['numbers'],
+            $stats['average'],
+            $stats['variance'],
+            $stats['standardDeviation']
+        );
+    }
+
+The `Context\Engine` just delegates the execution to the given context with the given parameters
+in this case, no additional abstraction. We can make use of the first abstraction of Context,
+we could try automatic mapping of input parameters into the model request. If the request
+contains a variable "numbers" it could be mapped on the $numbers parameter.
+
+    <?php
+    $context = new \Context\Engine();
+    $context->setMapper(new \Context\Mapper\PhpSuperGlobalsMapper());
+
+    $stats = $context->execute(array(
+        'context' => array($calculator, 'statistics')
+    ));
+
+If you studied the Calculator code you saw that it throws exceptions on invalid input. Context
+can handle exceptions from the model layer and transform them into valuable messages for the user:
+
+    <?php
+    $context = new \Context\Engine();
+    $context->setExceptionHandler(function ($e) {
+        echo $e->getMessage();
+        die();
+    });
+
+Now lets move one step further and turn this logic into a command line application.
+Parameters are assigned to the 'statistics' function based on the positional arguments
+to the script:
+
+    <?php
+    $context = new \Context\Engine();
+    $context->setMapper(new \Context\Mapper\ArgvMapper());
+
+    $stats   = $context->execute(array(
+        'context' => array($calculator, 'statistics'),
+    ));
+
+The 'statistics' method only takes one argument, an array. How can we pass the array
+on the command-line? Two options seem possible:
+
+1. Comma-seperated list: "1,2,3,4,5,6"
+2. Multiple Opt-Arguments with the same name: --numbers 1 --numbers 2
+
+Lets see how this looks in code:
+
+    <?php
+    $context = new \Context\Engine();
+    $context->addParamConverter(new \Context\ParamConverter\CommaSeperatedListConverter());
+
+Or for the second:
+
+    <?php
+    $context = new \Context\Engine();
+    $context->setMapper(new \Context\Mapper\GetOptMapper());
+
+    $stats   = $context->execute(array(
+        'context' => array($calculator, 'statistics'),
+        'shortOptions' => "n:",
+        "longOptions" => array("number:"),
+    ));
 
 ## Terminology
 
 ### Model
 
-Layer where business logic and access to persistence happens. Can be seperated
-into two parts Interactor and Entity.
+Layer where business logic and access to persistence happens. Can be sub-divided
+into two distinct parts: Interactor and Entity.
+
+### Entity/Data
+
+Data objects which contain application independent business rules.
+
+### Interactor
+
+Use-Case objects that contain application-specific business rules.
 
 ### Delivery Mechanism
 
@@ -39,7 +174,7 @@ model (subject) to listen to success and failure states.
 
 ### Context (Interaction)
 
-A context is any PHP callable (no-base class?) that handles a use-case. Its execution is wrapped in a boundary.
+A context is any class that handles a use-case and therefore very similar to the interactor concept.
 
 ### Entity-Boundary-Interactor
 
@@ -86,11 +221,11 @@ rendered as HTML page. Error handling is implemented in terms of the framework.
     }
 
 In this example there is absolutely no abstraction between model, persistence and controller.
-To achieve some way of abstraction the entity manager service + finder has to be hidden behind
-an interface + implementation:
+To achieve some way of abstraction the Doctrine Entity Manager has to be hidden behind
+behind a persistent-ignorant interface and a Doctrine implementation:
 
     <?php
-    class UserRepository implements UserRepositoryInterface
+    class DoctrineUserRepository implements UserRepositoryInterface
     {
         private $em; // constructor omitted
 
