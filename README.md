@@ -52,7 +52,16 @@ Pattern that helps solve the mental-model mismatch between static data and behav
 The Interactor from EBI-Pattern is a context that manages a use-case and the data
 objects are "casted into" roles containing behavior. This can be done through aggregation.
 
-## Simple Example: Symfony View Resource Request
+## Command Pattern
+
+The context library implements a command-pattern. That means that we build
+command object or methods that implement full use-cases. For all use-cases that
+manipulate data this means you have to wrap them in methods.
+
+In cases where you only need to display data from the persistence layer and no
+logic happens wrapping the code in an additional layer is not necessary.
+
+## Simple Example: Symfony View Request (No Context needed)
 
 In this example a domain object is fetched using a service from a locator and then
 rendered as HTML page. Error handling is implemented in terms of the framework.
@@ -97,7 +106,7 @@ an interface + implementation:
         }
     }
 
-The controller could then be rewritten using a command/work pattern:
+The controller could then be rewritten to this simple bit:
 
     <?php
 
@@ -107,59 +116,14 @@ The controller could then be rewritten using a command/work pattern:
         {
             $repository = $this->container->get('user_repository'); // our service
 
-            $boundary = new Symfony2Boundary(); // probably needs dependencies
-            return $boundary->invoke(array(
-                'context' => array($repository, 'find'),
-                'success' => function (User $User) {
-                    return $this->render('MyApplicationBundle:User:view.html.twig', array(
-                        'user' => $user
-                    ));
-                },
-                'exception' => function($e) {
-                    throw new HttpNotFoundException();
-                }
+            return $this->render('MyApplicationBundle:User:view.html.twig', array(
+                'user' => $repository->find($id)
             ));
         }
     }
 
-Now if this pattern is repetitive in your domain for every view of a repository you can extract the
-different controller parts, again gaining reusable code:
-
-    <?php
-    abstract class EntityController extends Controller
-    {
-        public function viewSuccess($entity)
-        {
-            $template = $this->getTemplateFor($entity);
-            return $this->render($template, array('object' => $entity));
-        }
-
-        public function onException($e)
-        {
-            throw new HttpNotFoundException();
-        }
-    }
-
-    class UserController extends EntityController
-    {
-        public function viewAction($id)
-        {
-            $repository = $this->container->get('user_repository');
-
-            $boundary = new Symfony2Boundary();
-            return $boundary->invoke(array(
-                'context'   => array($repository, 'find'),
-                'success'   => array($this, 'viewSuccess'),
-                'exception' => array($this, 'onException'),
-                'template'  => 'MyApplicationBundle:User:view.html.twig',
-            ));
-        }
-    }
-
-Outlook: You could even get rid of the 'exception' key by defining this globally in the framework
-once and only overriding this observer callback for specific use-cases. Depending
-on the framework you could even get rid of the controller layer completly for CRUD
-operations and directly map from request/routing into a context (works for Symfony2).
+The only thing missing here is the Symfony `NotFoundException`. However you can override
+the error handler in Symfony and handle all domain exceptions there.
 
 ## How does Input/Output Mapping work?
 
