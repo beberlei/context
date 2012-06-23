@@ -11,20 +11,34 @@ to tight coupling and painful reusability, testing and refactoring experience.
 Context does not interfere in your model. It offers a convenience wrapper around your model
 that acts as translation mechanism between presentation layer and model.
 
+This strict seperation does not even have to lead to overengineering and non-rapid application building.
+It is very simple to build rapid prototypes on top of the context abstraction.
+
 ## Features
 
 * Support mapping Requests (HTTP, Console, or any input for that matter) on model-request
 * Encourage Observers that notify presentation layer of different model results (subject).
 * Transparent transformation of model exceptions into application-level exceptions/errors
-* Pluggable delivery mechanisms (Web, CLI, MessageQueues, Unit-Tests, ..)  map to the same model
+* Pluggable delivery mechanisms (Web, CLI, MessageQueues, Mail, Unit-Tests, ..)  map to the same model
 * Command pattern approach (Could allow to keep transactional log of the domain events: Do, Undo, Redo)
 * Simplify transaction-management
 * Hooks for Validation/Input Filtering
 * Seperate testing for controller-patterns from model
 
+## Concepts
+
+* Context\Engine is a wrapper to call model commands from in your application.
+* Input sources describe what request data is available to the model,
+  for example superglobals or console arguments.
+* Parameter Converters are rules to convert input/request-data into
+  model-request data, for example "2010-01-01" into a datetime instance.
+* ExceptionHandler catch every exception from the model layer and allow to turn
+  it into an application level exception.
+
 ## Example: Calculator
 
-This is a very simple README compatible example for a calculator.
+This is a very simple README compatible example for a statistical calculator. It
+computes the average, variance and standard deviation of a list of numbers.
 
     class Calculator
     {
@@ -68,7 +82,7 @@ different types of applications. Lets start with a completly unabstracted PHP/HT
         $context = new \Context\Engine();
         $stats   = $context->execute(array(
             'context' => array($calculator, 'statistics'),
-            'params'  => $_GET['numbers'],
+            'params'  => array($_GET['numbers']),
         ));
 
         $html = <<<HTML
@@ -94,7 +108,7 @@ contains a variable "numbers" it could be mapped on the $numbers parameter.
 
     <?php
     $context = new \Context\Engine();
-    $context->setMapper(new \Context\Mapper\PhpSuperGlobalsMapper());
+    $context->addInput(new \Context\Input\PhpSuperGlobalsInput());
 
     $stats = $context->execute(array(
         'context' => array($calculator, 'statistics')
@@ -105,7 +119,7 @@ can handle exceptions from the model layer and transform them into valuable mess
 
     <?php
     $context = new \Context\Engine();
-    $context->setExceptionHandler(function ($e) {
+    $context->addExceptionHandler(function ($e) {
         echo $e->getMessage();
         die();
     });
@@ -116,7 +130,7 @@ to the script:
 
     <?php
     $context = new \Context\Engine();
-    $context->setMapper(new \Context\Mapper\ArgvMapper());
+    $context->addInput(new \Context\Input\ArgvInput());
 
     $stats   = $context->execute(array(
         'context' => array($calculator, 'statistics'),
@@ -138,7 +152,7 @@ Or for the second:
 
     <?php
     $context = new \Context\Engine();
-    $context->setMapper(new \Context\Mapper\GetOptMapper());
+    $context->addInput(new \Context\Input\GetOptInput());
 
     $stats   = $context->execute(array(
         'context' => array($calculator, 'statistics'),
@@ -146,57 +160,131 @@ Or for the second:
         "longOptions" => array("number:"),
     ));
 
-## Terminology
+There are two concepts at work inside the Context Engine, when a request model is created
+from application inputs:
 
-### Model
+    1. Input instances are sources for input parameters 
+       during creation of the request model.
+    2. Parameter converters look at the method signature of 
+       your model and convert application input into model
+       request input based on rules and priorities.
 
-Layer where business logic and access to persistence happens. Can be sub-divided
-into two distinct parts: Interactor and Entity.
+## Input sources
 
-### Entity/Data
+There are some default input sources shipped with Context:
 
-Data objects which contain application independent business rules.
+* PhpSuperGlobalsInput
+* SessionInput
+* ArgvInput
+* GetoptInput
 
-### Interactor
+Input sources can be much more powerful, by using the request information
+of your application framework.
 
-Use-Case objects that contain application-specific business rules.
+## Parameter Converters
 
-### Delivery Mechanism
+There are several parameter converts that ship with Context, however the power of Context
+can only be leveraged when you write your own converters, specific to the application
+framework you are using.
 
-The delivery mechanism is a way input/output and data processing work in your
-application: Human/Machine, Asynchroneous/Synchroneus, HTTP/REST/CLI/GUI, Client/Server, and so on.
+* CommaSeperatedListConverter - Converters a comma-seperated string into an array.
+* DateTimeConverter - Converts a string or an array into a DateTime instance.
+* DateIntervalConverter - Converts a string or an array into a DateInterval instance.
+* ObjectConverter - Converts an array into an object by mapping keys of the array to constructor argument names, setter or public properties.
+* EventArgsConverter - Converts a request into an "EventArgs" argument to the model, containing source and data of the event.
+* ServiceConverter - Grabs requested services based on type-hint information from a service registry.
 
-### Boundary
+There are also a generic converter related to persistence:
 
-Seperates Input from model layer by describing how to map delivery mechanism
-inputs into a request against your model. The boundary acts an observer to
-model (subject) to listen to success and failure states.
+* PersistentObjectConverter - converters an array or an identifier value into a persistent object from your storage layer.
 
-### Context (Interaction)
+We ship with a set of implementations in the "Context\Plugin" namespace:
 
-A context is any class that handles a use-case and therefore very similar to the interactor concept.
+* DoctrinePersistentObjectConverter
+* SymfonyUserObjectConverter
 
-### Entity-Boundary-Interactor
+### ObjectConverter
 
-Pattern that describes how to seperate delivery mechanisms from model through boundaries.
-Interactors contain the behavior of the model, entity represent the static data model.
+The object converted needs a special introduction, as it is the powerhouse of Context.
 
-### Data-Context-Interaction
+Assume you have simple messaging application that sends e-mails to lists of recipients. One functionality
+would be the accepting, validating, and sending of an actual message:
 
-Pattern that helps solve the mental-model mismatch between static data and behavior.
-The Interactor from EBI-Pattern is a context that manages a use-case and the data
-objects are "casted into" roles containing behavior. This can be done through aggregation.
+    <?php
+    class MessageService
+    {
+        public function send(Sender $sender, Message $message, RecipientSpecification $spec)
+        {
+            // code: $sender sends $message to all recipients matching $spec
+        }
+    }
 
-## Command Pattern
+There are three distinct arguments here, the Sender, the Message and a description of all
+recipients. These classes are data-transfer-objects and we can use them for validation and input filtering:
 
-The context library implements a command-pattern. That means that we build
-command object or methods that implement full use-cases. For all use-cases that
-manipulate data this means you have to wrap them in methods.
+    <?php
+    class Message
+    {
+        public $subject;
+        public $body;
 
-In cases where you only need to display data from the persistence layer and no
-logic happens wrapping the code in an additional layer is not necessary.
+        public function __construct($subject, $body)
+        {
+            if (strlen($subject) > 100) {
+                throw new \RuntimeException("Subject is not allowed to be larger than 100");
+            }
+            $this->subject = strip_tags($subject);
+            $this->body = strip_tags($body);
+        }
+    }
 
-## Simple Example: Symfony View Request (No Context needed)
+Now the ObjectConverter comes into play, as it allows us to automatically map arrays to these structs.
+When invoking the `MessageSerivce#send()` method through Context, the param converter will detect the
+argument type hints and will try to convert an input array into that type hinted class.
+
+It is using the following semantics:
+
+- If any constructor argument name matches a name of the array the value is injected there.
+- If the class has a setter method named "set$key" it is used to inject the parameter.
+- If the class has a public property name after the key the value is injected there.
+- If the class implements `ArrayAccess` or `__set`, the value is injected this way.
+
+An example of request arguments to make the MessageService working would be:
+
+    <?php
+    $context = new \Context\Engine();
+    $context->addParamConverter(new \Context\ParamConverter\ObjectConverter());
+
+    $context->execute(array(
+        'context' => array($messageService, 'send'),
+        'params' => array(
+            'sender'  => array('email' => 'kontakt@beberlei.de'),
+            'spec'    => array('list' => 1234),
+            'message' => array('subject' => 'Hello World!', 'body' => 'Hello World from body!')
+        )
+    ));
+
+Now With the `PhpSuperGlobalsInput` you could take the parameter information from `$_POST` automatically.
+
+## Plugins
+
+The plugin system acts as an AOP-layer around your model code. The model is the join-point, where additional behavior
+can be useful to add around. This additional behavior is called Advice. The following advices are general purpose
+behaviors that are very useful:
+
+* Logging
+* Error Handling (and in fact the Context Exception Handler is an Advice)
+* Transactional Boundary, wrap every call into a transaction of your persistence layer
+* Parameter Converters
+* Validation/Filtering
+* (Replayable) Command Log of every action against your model
+
+## Read-Only Example: Symfony View Request (No Context needed)
+
+There are cased when you don't need context in your controllers, even if you use
+it excessively. Whenever there is no advice and no parameter-conversion necessary
+then you can just use the actual service object. This applies to many read-only
+requests.
 
 In this example a domain object is fetched using a service from a locator and then
 rendered as HTML page. Error handling is implemented in terms of the framework.
@@ -225,6 +313,15 @@ To achieve some way of abstraction the Doctrine Entity Manager has to be hidden 
 behind a persistent-ignorant interface and a Doctrine implementation:
 
     <?php
+    interface UserRepositoryInterface
+    {
+        /**
+         * @throws UserNotFoundException
+         * @return User
+         */
+        function find($id);
+    }
+
     class DoctrineUserRepository implements UserRepositoryInterface
     {
         private $em; // constructor omitted
@@ -257,36 +354,49 @@ The controller could then be rewritten to this simple bit:
         }
     }
 
-The only thing missing here is the Symfony `NotFoundException`. However you can override
-the error handler in Symfony and handle all domain exceptions there.
+The only thing missing here is the conversion of UserNotFoundException into
+Symfony `NotFoundException`. So we actually need a very leightweight invocation
+through Context:
 
-## How does Input/Output Mapping work?
+    <?php
 
-Whenever either the context or an observer event is invoked the arguments are resolved
-using the Reflection API:
+    class MySymfonyExceptionHandler implements ExceptionHandler
+    {
+        public function catch(Exception $e)
+        {
+            if ($e instanceof UserNotFoundException) {
+                throw NotFoundHttpException;
+            }
+        }
+    }
 
-    * Gather possible arguments from options 'variables' or by retrieving request variables.
-    * Get all arguments definitions of the method/function.
-    * Match variables by type-hints from the list of potential arguments. 
-    * Match variables by name from the list of potential arguments.
-    * Throw exception if a variable cannot be matched and is required, use default otherwise.
-    * Transform value from its boundary representation into the requesed model representation.
-    * Invoke method/function with arguments.
+    class UserController extends Controller
+    {
+        public function viewAction($id)
+        {
+            $repository = $this->container->get('user_repository'); // our service
 
-There are some special cases:
+            return $this->render('MyApplicationBundle:User:view.html.twig', array(
+                'user' => $this->executeContext(array(
+                    'context' => array($repository, 'find'),
+                    array($id)
+                 ))
+            ));
+        }
 
-    * The 'success' closure gets passed the return value of the 'context' when not executed explicitly.
-    * ContextObserver is an interface that get injected when type-hinted.
+        // reusable parts in your framework
+        public function executeContext(array $params)
+        {
+            return $this->getContextEngine()->execute($params);
+        }
 
-Possible argument transformation:
-
-    * String/Integer into DateTime
-    * Scalar/Array Primary Key into Object
-    * Scalar/Array into Value Object
-    * Array into New Object
-    * ...
-
-Open Question how to configure if an object is only mapped from an integer, not created/updated from an array?
+        public function getContextEngine()
+        {
+            $context = new \Context\Engine;
+            $context->addExceptionHandler(new MySymfonyExceptionHandler());
+            return $context;
+        }
+    }
 
 ## Complex Example: Symfony Form 
 
@@ -315,7 +425,7 @@ Here the "Symfony approved" way, an example from the documentation:
                     $mailer->send(...);
 
                     $session = $this->get('session');
-                    k$session->getFlashBag()->add('success', 'You have registered!');
+                    $session->getFlashBag()->add('success', 'You have registered!');
 
                     return $this->redirect($this->generateUrl('someroute'));
                 }
@@ -344,18 +454,19 @@ and creating a new user. So a method minus the controller/view/transactional clu
         }
     }
 
-The form handling of the controller contains generic-reusable code for all forms in your application:
+The form handling of the controller contains generic-reusable code for all forms in your application.
+There is no need to write this kind of code more than once. Lets implement an advice, that converts
+a form type into its data object and injects it into the parameters.
 
     <?php
-
-    class SymfonyFormBoundary extends Boundary
+    class SymfonyFormAdvice implements BeforeAdvice
     {
-        protected function execute(Context $context, array $options)
+        public function before($invocation, array $options);
         {
-            $form = $this->createForm($options['type']);
-            $failureHandler = $options['failure'];
+            $form = $this->formFactory->createForm($options['type']);
 
-            if ($options['request']->getMethod() != 'POST') {
+            if ($options['request']->getMethod() !== 'POST') {
+                $failureHandler = $options['failure'];
                 return $failureHandler($form);
             }
 
@@ -364,93 +475,33 @@ The form handling of the controller contains generic-reusable code for all forms
             if ( ! $form->isValid()) {
                 return $failureHandler($form);
             }
-
-            $args = $this->resolveContextArguments($context, $options['request']);
-
-            try {
-                $ret = call_user_func_array(array($context, 'execute'), $args);
-                $successHandler = $options['success'];
-
-                return $successHandler($ret);
-            } catch(\Exception $e) {
-                $exceptionHandler = $options['exception'];
-                return $exceptionHandler($e, $form);
-            }
+            
+            $options['params'][$form->getName()] = $form->getData();
+            return $options;
         }
     }
 
-The transactional code for a Doctrine EntityManager:
+The transactional code for a Doctrine EntityManager can be wrapped
+into a plugin that surrounds the whole command execution.
 
-    <?php
-    class DoctrineOrmTransaction implements ContextTransaction
-    {
-        public function beginTransaction()
-        {
-            $this->entityManager->beginTransaction();
-        }
-
-        public function commit()
-        {
-            $this->entityManager->flush();
-            $this->entityManager->commit();
-        }
-
-        public function rollback()
-        {
-            $this->entityManager->rollBack();
-        }
-    }
-
-The controller is then without any abstraction over the boundary:
+The controller then becomes an invocating of the context, using
+closures as event:
 
     <?php
     class RegistrationController
     {
-        public function registerAction()
+        public function registerActionSuccess($user)
         {
-            $boundary = new SymfonyFormBoundary(); // deps missing
-            return $boundary->invoke(array(
-                'context' => new RegisterUserContext(),
-                'type'    => new UserType(),
-                'request' => $this->getRequest(),
-                'tx'      => $this->container->get('context.tx.doctrine_orm'),
-                'success' => function($user, $controller) {
-                    $mailer = $controller->get('mailer');
-                    $mailer->send(...);
+            $mailer = $controller->get('mailer');
+            $mailer->send(...);
 
-                    $session = $controller->get('session');
-                    $session->getFlashBag()->add('success', 'You have registered!');
+            $session = $controller->get('session');
+            $session->getFlashBag()->add('success', 'You have registered!');
 
-                    return $controller->redirect($controller->generateUrl('someroute'));
-                },
-                'failure' => function($form) {
-                    return $this->render(
-                        'Bundle:Registration:register.html.twig',
-                        array('form' => $form->createView())
-                    );
-                }
-            ));
+            return $this->redirect($controller->generateUrl('someroute'));
         }
-    }
 
-With an abstraction layer over the boundary and re-use of behavior this could simplify:
-
-    <?php
-    class RegistrationController
-    {
-        public function registerAction()
-        {
-            $boundary = new SymfonyFormBoundary(); // deps missing
-            return $boundary->invoke(array(
-                // 'tx', 'request' injected automatically in SF2 context
-                'context' => new RegisterUserContext(),
-                'type' => new UserType(),
-                'success' => array($this, 'sendMailFlashRedirectAction'),
-                'failure' => array($this, 'renderFailureResponseAction'),
-            ));
-        }
-        
-        public function renderFailureResponseAction($form)
+        public function registerActionFailure($form)
         {
             return $this->render(
                 'Bundle:Registration:register.html.twig',
@@ -458,58 +509,14 @@ With an abstraction layer over the boundary and re-use of behavior this could si
             );
         }
 
-        public function sendMailFlashRedirectAction($user)
+        public function registerAction()
         {
-            $mailer = $this->get('mailer');
-            $mailer->send(...);
-
-            $session = $this->get('session');
-            $session->getFlashBag()->add('success', 'You have registered!');
-
-            return $this->redirect($this->generateUrl('someroute'));
-        }
-    }
-
-## Observer
-
-If you typehint for `Context\ContextObserver` interface in your model you get the observer injected:
-
-    <?php
-    interface ContextObserver
-    {
-        function notify($event, array $variables);
-    }
-
-    class RegisterUserContext
-    {
-        public function register(ContextObserver $observer)
-        {
-            //...
-            $observer->notify('some_event', array('foo' => 'bar'));
-            //...
-        }
-    }
-
-By default Context create an observer that will invoke closures from the options
-array passed to the `Boundary::invoke`` method. You can override the observer
-by setting 'observer' key at boundary invocation.
-
-## Testing
-
-Context provides a very simple boundary that does require any dependencies. You can use it to execute
-Unit-/Functional-Tests for your context objects.
-
-    <?php
-
-    class RegisterUserContextTest extends PHPUnit_Framework_TestCase
-    {
-        public function testRegister()
-        {
-            $boundary = new SimpleBoundary();
-            $value = $boundary->invoke(array(
-                'variables' => array('user' => new User()),
+            return $this->executeContext(array(
+                'context' => array(new RegisterUserContext(), 'execute'),
+                'type'    => new UserType(),
+                'success' => array($this, 'registerSuccess'),
+                'failure' => array($this, 'registerActionFailure'),
             ));
-
-            // assertions on $value
         }
     }
+
