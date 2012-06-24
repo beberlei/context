@@ -179,7 +179,12 @@ There are some default input sources shipped with Context:
 * GetoptInput
 
 Input sources can be much more powerful, by using the request information
-of your application framework.
+of your application framework. Input Sources could be:
+
+* Message Queues (RabbitMQ, ZeroMQ, ...)
+* REST API (XML, JSON Data)
+* SOAP 
+* Mail Pipes
 
 ## Parameter Converters
 
@@ -418,8 +423,11 @@ Here the "Symfony approved" way, an example from the documentation:
                 $form->bindRequest($request);
 
                 if ($form->isValid()) {
+                    // do much more work here regarding registration.
+
                     $entityManager = $this->get('doctrine.orm.default_entity_manager');
                     $entityManager->persist($user);
+                    $entityManager->flush();
 
                     $mailer = $this->get('mailer');
                     $mailer->send(...);
@@ -447,7 +455,7 @@ and creating a new user. So a method minus the controller/view/transactional clu
     {
         public function execute(User $candidate)
         {
-            // do much more work here.
+            // do much more work here regarding registration.
             $this->entityManager->persist($candidate);
 
             return $candidate;
@@ -459,9 +467,9 @@ There is no need to write this kind of code more than once. Lets implement an ad
 a form type into its data object and injects it into the parameters.
 
     <?php
-    class SymfonyFormAdvice implements BeforeAdvice
+    class SymfonyFormAdvice implements AroundAdvice
     {
-        public function before($invocation, array $options);
+        public function around($invocation, array $options);
         {
             $form = $this->formFactory->createForm($options['type']);
 
@@ -477,7 +485,8 @@ a form type into its data object and injects it into the parameters.
             }
             
             $options['params'][$form->getName()] = $form->getData();
-            return $options;
+
+            return $innvocation->invoke();
         }
     }
 
