@@ -4,7 +4,7 @@ Small PHP library to help you shield your business-rules from the
 controller and presentation layers. To achieve this goal the Data-Context-Interaction
 and Entity-Boundary-Interceptor patterns are used. Context is a framework "for the model".
 
-This library tries to solve problems with todays Web/MVC applications and their 
+This library was born while trying to solve problems with todays Web/MVC applications and their
 focus on the controller. Using MVC frameworks the "documented" way often leads
 to tight coupling and painful reusability, testing and refactoring experience.
 
@@ -23,7 +23,7 @@ It is very simple to build rapid prototypes on top of the context abstraction.
 * Command pattern approach (Could allow to keep transactional log of the domain events: Do, Undo, Redo)
 * Simplify transaction-management
 * Hooks for Validation/Input Filtering
-* Seperate testing for controller-patterns from model
+* Avoid testing applications through controllers/frameworks
 
 ## Concepts
 
@@ -163,9 +163,9 @@ Or for the second:
 There are two concepts at work inside the Context Engine, when a request model is created
 from application inputs:
 
-    1. Input instances are sources for input parameters 
+    1. Input instances are sources for input parameters
        during creation of the request model.
-    2. Parameter converters look at the method signature of 
+    2. Parameter converters look at the method signature of
        your model and convert application input into model
        request input based on rules and priorities.
 
@@ -183,7 +183,7 @@ of your application framework. Input Sources could be:
 
 * Message Queues (RabbitMQ, ZeroMQ, ...)
 * REST API (XML, JSON Data)
-* SOAP 
+* SOAP
 * Mail Pipes
 
 ## Parameter Converters
@@ -339,7 +339,7 @@ behind a persistent-ignorant interface and a Doctrine implementation:
             if ( ! $user) {
                 throw new UserNotFoundException($id);
             }
-            
+
             return $user;
         }
     }
@@ -404,7 +404,7 @@ through Context:
         }
     }
 
-## Complex Example: Symfony Form 
+## Complex Example: Symfony Form
 
 Lets formulate the default "handle a form" in Symfony2 into "context"
 
@@ -468,11 +468,12 @@ There is no need to write this kind of code more than once. Lets implement an ad
 a form type into its data object and injects it into the parameters.
 
     <?php
-    class SymfonyFormAdvice implements AroundAdvice
+    class SymfonyFormAdvice implements Advice
     {
-        public function around($invocation, array $options);
+        public function around(ContextInvocation $invocation);
         {
-            $form = $this->formFactory->createForm($options['type']);
+            $options = $invocation->getOptions();
+            $form    = $this->formFactory->createForm($options['type']);
 
             if ($options['request']->getMethod() !== 'POST') {
                 $failureHandler = $options['failure'];
@@ -484,10 +485,12 @@ a form type into its data object and injects it into the parameters.
             if ( ! $form->isValid()) {
                 return $failureHandler($form);
             }
-            
+
             $options['params'][$form->getName()] = $form->getData();
 
-            return $innvocation->invoke();
+            $data = $innvocation->invoke();
+            $successCallback = $options['success'];
+            return $successCallback($data);
         }
     }
 
