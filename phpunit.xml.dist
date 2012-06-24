@@ -1,0 +1,17 @@
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         stopOnFailure="false"
+         syntaxCheck="false"
+         bootstrap="./tests/bootstrap.php"
+>
+    <testsuites>
+        <testsuite name="Context TestSuite">
+            <directory>./tests/Context/Tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
+

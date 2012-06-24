@@ -1,0 +1,24 @@
+{
+    "hash": "6851f23d721ddfdc9e76eb1bc58bb8e9",
+    "packages": [
+        {
+            "package": "symfony/options-resolver",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/options-resolver",
+            "version": "dev-master",
+            "source-reference": "915b39d1e0ad1c1f2526b93a16a10e5e504aefad"
+        }
+    ],
+    "packages-dev": null,
+    "aliases": [
+
+    ],
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "symfony/options-resolver": 20
+    }
+}

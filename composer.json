@@ -1,0 +1,17 @@
+{
+    "name": "context/context",
+    "type": "library",
+    "description": "Library that translates between application and model requests/responses",
+    "keywords": ["model", "framework", "request", "response"],
+    "authors": [
+        {"name": "Benjamin Eberlei", "email": "kontakt@beberlei.de"}
+    ],
+    "require": {
+        "symfony/options-resolver": "dev-master"
+    },
+    "autoload": {
+        "psr-0": {
+            "Context": "src/"
+        }
+    }
+}

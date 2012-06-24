@@ -79,8 +79,8 @@ different types of applications. Lets start with a completly unabstracted PHP/HT
     $calculator = new Calculator();
 
     if (isset($_GET['numbers'])) {
-        $context = new \Context\Engine();
-        $stats   = $context->execute(array(
+        $engine = new \Context\Engine();
+        $stats   = $engine->execute(array(
             'context' => array($calculator, 'statistics'),
             'params'  => array($_GET['numbers']),
         ));
@@ -107,10 +107,10 @@ we could try automatic mapping of input parameters into the model request. If th
 contains a variable "numbers" it could be mapped on the $numbers parameter.
 
     <?php
-    $context = new \Context\Engine();
-    $context->addInput(new \Context\Input\PhpSuperGlobalsInput());
+    $engine = new \Context\Engine();
+    $engine->addInput(new \Context\Input\PhpSuperGlobalsInput());
 
-    $stats = $context->execute(array(
+    $stats = $engine->execute(array(
         'context' => array($calculator, 'statistics')
     ));
 
@@ -118,8 +118,8 @@ If you studied the Calculator code you saw that it throws exceptions on invalid 
 can handle exceptions from the model layer and transform them into valuable messages for the user:
 
     <?php
-    $context = new \Context\Engine();
-    $context->addExceptionHandler(function ($e) {
+    $engine = new \Context\Engine();
+    $engine->addExceptionHandler(function ($e) {
         echo $e->getMessage();
         die();
     });
@@ -129,10 +129,10 @@ Parameters are assigned to the 'statistics' function based on the positional arg
 to the script:
 
     <?php
-    $context = new \Context\Engine();
-    $context->addInput(new \Context\Input\ArgvInput());
+    $engine = new \Context\Engine();
+    $engine->addInput(new \Context\Input\ArgvInput());
 
-    $stats   = $context->execute(array(
+    $stats   = $engine->execute(array(
         'context' => array($calculator, 'statistics'),
     ));
 
@@ -145,16 +145,16 @@ on the command-line? Two options seem possible:
 Lets see how this looks in code:
 
     <?php
-    $context = new \Context\Engine();
-    $context->addParamConverter(new \Context\ParamConverter\CommaSeperatedListConverter());
+    $engine = new \Context\Engine();
+    $engine->addParamConverter(new \Context\ParamConverter\CommaSeperatedListConverter());
 
 Or for the second:
 
     <?php
-    $context = new \Context\Engine();
-    $context->addInput(new \Context\Input\GetOptInput());
+    $engine = new \Context\Engine();
+    $engine->addInput(new \Context\Input\GetOptInput());
 
-    $stats   = $context->execute(array(
+    $stats   = $engine->execute(array(
         'context' => array($calculator, 'statistics'),
         'shortOptions' => "n:",
         "longOptions" => array("number:"),
@@ -257,10 +257,10 @@ It is using the following semantics:
 An example of request arguments to make the MessageService working would be:
 
     <?php
-    $context = new \Context\Engine();
-    $context->addParamConverter(new \Context\ParamConverter\ObjectConverter());
+    $engine = new \Context\Engine();
+    $engine->addParamConverter(new \Context\ParamConverter\ObjectConverter());
 
-    $context->execute(array(
+    $engine->execute(array(
         'context' => array($messageService, 'send'),
         'params' => array(
             'sender'  => array('email' => 'kontakt@beberlei.de'),
@@ -283,6 +283,7 @@ behaviors that are very useful:
 * Parameter Converters
 * Validation/Filtering
 * (Replayable) Command Log of every action against your model
+* Authorization (Access Control)
 
 ## Read-Only Example: Symfony View Request (No Context needed)
 
@@ -397,9 +398,9 @@ through Context:
 
         public function getContextEngine()
         {
-            $context = new \Context\Engine;
-            $context->addExceptionHandler(new MySymfonyExceptionHandler());
-            return $context;
+            $engine = new \Context\Engine;
+            $engine->addExceptionHandler(new MySymfonyExceptionHandler());
+            return $engine;
         }
     }
 
