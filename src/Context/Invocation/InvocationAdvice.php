@@ -39,6 +39,7 @@ class InvocationAdvice implements Advice
         $resolver->setRequired(array('context'));
         $resolver->setDefaults(array(
             'params' => array(),
+            'data'   => array(),
         ));
         return $resolver;
     }
