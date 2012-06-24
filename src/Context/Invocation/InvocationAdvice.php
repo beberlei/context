@@ -14,6 +14,8 @@
 namespace Context\Invocation;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Context\ParamConverter\ArgumentResolver;
+use Context\ParamConverter\ParamsArgumentResolver;
 
 /**
  * Advice that invokes the context with parameters.
@@ -22,6 +24,16 @@ use Symfony\Component\OptionsResolver\OptionsResolverInterface;
  */
 class InvocationAdvice implements Advice
 {
+    /**
+     * @var ArgumentResolver
+     */
+    private $resolver;
+
+    public function __construct(ArgumentResolver $resolver = null)
+    {
+        $this->resolver = $resolver ?: new ParamsArgumentResolver();
+    }
+
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
         $resolver->setRequired(array('context'));
@@ -34,11 +46,9 @@ class InvocationAdvice implements Advice
     public function around(ContextInvocation $context)
     {
         $options = $context->getOptions();
+        $params  = $this->resolver->resolve($context);
 
-        return call_user_func_array(
-            $options['context'],
-            $options['params']
-        );
+        return call_user_func_array($options['context'], $params);
     }
 }
 
