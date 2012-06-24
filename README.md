@@ -2,17 +2,23 @@
 
 Small PHP library to help you shield your business-rules from the
 controller and presentation layers. To achieve this goal the Data-Context-Interaction
-and Entity-Boundary-Interceptor patterns are used. Context is a framework "for the model".
+and Entity-Boundary-Interceptor patterns are put to action. Context is a framework "for the model".
 
 This library was born while trying to solve problems with todays Web/MVC applications and their
 focus on the controller. Using MVC frameworks the "documented" way often leads
-to tight coupling and painful reusability, testing and refactoring experience.
+to tight coupling and painful reusability, testing and refactoring experience. Working
+with a completly seperate service layer is tedious however, requiring lots of manual
+mapping between application and model layers through Data-Transfer-Objects. Context
+tries to automate this mapping process as much as possible.
 
 Context does not interfere in your model. It offers a convenience wrapper around your model
 that acts as translation mechanism between presentation layer and model.
 
 This strict seperation does not even have to lead to overengineering and non-rapid application building.
 It is very simple to build rapid prototypes on top of the context abstraction.
+
+    Note: This library is in README-driven-development. The snapshot of examples here is not yet
+    implemented fully.
 
 ## Features
 
