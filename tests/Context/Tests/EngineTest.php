@@ -26,7 +26,8 @@ class EngineTest extends \PHPUnit_Framework_TestCase
         $mock->expects($this->once())->method('execute');
 
         $engine->execute(array(
-            'context' => array($mock, 'execute')
+            'context' => array($mock, 'execute'),
+            'disable_exception_handler' => true,
         ));
     }
 
@@ -42,6 +43,7 @@ class EngineTest extends \PHPUnit_Framework_TestCase
         $engine->execute(array(
             'context' => array($mock, 'execute'),
             'params'  => array(1, "string"),
+            'disable_exception_handler' => true,
         ));
     }
 }

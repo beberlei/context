@@ -16,6 +16,10 @@ namespace Context;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\Options;
 
+use Context\Invocation\InvocationAdvice;
+use Context\Invocation\Advice;
+use Context\Plugins\ExceptionHandler\ExceptionAdvice;
+
 /**
  * The context engine, translating between
  * application and model request/response objects.
@@ -31,7 +35,34 @@ class Engine
 
     public function __construct()
     {
-        $this->advices[] = new Invocation\InvocationAdvice();
+        $this->advices[] = new ExceptionAdvice();
+    }
+
+    /**
+     * Add advice to the invocation advice stack.
+     *
+     * This advice will be appended to the stack of advices.
+     *
+     * @param Advice $advice
+     */
+    public function addAdvice(Advice $advice)
+    {
+        $this->advices[] = $advice;
+    }
+
+    /**
+     * Add exception handler to ExceptionAdvice if found.
+     *
+     * @param Closure|ExceptionHandler $handler
+     */
+    public function addExceptionHandler($handler)
+    {
+        foreach ($this->advices as $advice) {
+            if ($advice instanceof ExceptionAdvice) {
+                $advice->addExceptionHandler($handler);
+                break;
+            }
+        }
     }
 
     /**
@@ -42,22 +73,24 @@ class Engine
      */
     public function execute(array $options)
     {
-        $options = $this->resolveOptions($options);
         return $this->createContextInvocation($options)->invoke();
-    }
-
-    private function resolveOptions(array $options)
-    {
-        $resolver = new OptionsResolver();
-        foreach ($this->advices as $advice) {
-            $advice->setDefaultOptions($resolver);
-        }
-        return $resolver->resolve($options);
     }
 
     private function createContextInvocation($options)
     {
-        return new Invocation\ContextInvocation($options, $this->advices);
+        $advices = array_merge($this->advices, array(new InvocationAdvice()));
+        $options = $this->resolveOptions($options, $advices);
+
+        return new Invocation\ContextInvocation($options, $advices);
+    }
+
+    private function resolveOptions(array $options, array $advices)
+    {
+        $resolver = new OptionsResolver();
+        foreach ($advices as $advice) {
+            $advice->setDefaultOptions($resolver);
+        }
+        return $resolver->resolve($options);
     }
 }
 
