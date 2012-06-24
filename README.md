@@ -86,11 +86,11 @@ different types of applications. Lets start with a completly unabstracted PHP/HT
         ));
 
         $html = <<<HTML
-<strong>Numbers:</strong> %s<br />
-<strong>Average:</strong> %s<br />
-<strong>Variance:</strong> %s<br />
-<strong>Standard Deviation:</strong> %s<br />
-HTML;
+    <strong>Numbers:</strong> %s<br />
+    <strong>Average:</strong> %s<br />
+    <strong>Variance:</strong> %s<br />
+    <strong>Standard Deviation:</strong> %s<br />
+    HTML;
 
         echo sprintf(
             $html,
