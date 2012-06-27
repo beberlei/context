@@ -13,6 +13,8 @@
 
 namespace Context\ParamConverter;
 
+use ReflectionParameter;
+
 /**
  * Argument for Context
  */
@@ -31,7 +33,7 @@ class Argument
             $param->getClass(),
             $param->isArray(),
             $param->isOptional(),
-            $param->getDefaultValue()
+            $param->isOptional() ? $param->getDefaultValue() : null
         );
     }
 

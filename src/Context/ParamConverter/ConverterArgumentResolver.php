@@ -13,6 +13,8 @@
 
 namespace Context\ParamConverter;
 
+use Context\Invocation\ContextInvocation;
+
 class ConverterArgumentResolver implements ArgumentResolver
 {
     private $converters = array();
@@ -37,9 +39,9 @@ class ConverterArgumentResolver implements ArgumentResolver
 
         if ( ! $params) {
             foreach ($r->getParameters() as $parameter) {
-                $params[$parameter->getPosition()] =
-                    isset($data[$parameter->getName()]) ?
-                    $data[$parameter->getName() : null;
+                $params[$parameter->getPosition()] = isset($data[$parameter->getName()]) 
+                    ? $data[$parameter->getName()]
+                    : null;
             }
         }
 
@@ -71,6 +73,8 @@ class ConverterArgumentResolver implements ArgumentResolver
 
             $params[$pos] = $argument->getDefaultValue();
         }
+
+        return $params;
     }
 
    /**
