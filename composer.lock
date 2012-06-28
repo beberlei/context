@@ -1,5 +1,5 @@
 {
-    "hash": "6851f23d721ddfdc9e76eb1bc58bb8e9",
+    "hash": "3b46d11da0ae960c51ecd4a0b75744f0",
     "packages": [
         {
             "package": "symfony/options-resolver",
@@ -13,7 +13,13 @@
             "source-reference": "915b39d1e0ad1c1f2526b93a16a10e5e504aefad"
         }
     ],
-    "packages-dev": null,
+    "packages-dev": [
+        {
+            "package": "mockery/mockery",
+            "version": "dev-master",
+            "source-reference": "2c5e3244b72d268d8c70935fcceb39b3d84d57db"
+        }
+    ],
     "aliases": [
 
     ],

@@ -3,6 +3,8 @@ namespace Context\Tests\Invocation;
 
 use Context\Invocation\InvocationAdvice;
 use Context\Invocation\ContextInvocation;
+use Context\ParamConverter\ObjectConverter;
+use Context\ParamConverter\ConverterArgumentResolver;
 
 class InvocationAdviceTest extends \PHPUnit_Framework_TestCase
 {
@@ -11,7 +13,9 @@ class InvocationAdviceTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->advice = new InvocationAdvice();
+        $resolver = new ConverterArgumentResolver();
+        $resolver->addConverter(new ObjectConverter());
+        $this->advice = new InvocationAdvice($resolver);
         $this->context = new ContextInvocation();
     }
 
@@ -19,7 +23,8 @@ class InvocationAdviceTest extends \PHPUnit_Framework_TestCase
     {
         $this->context->setOptions(array(
             'context' => __NAMESPACE__ . '\\id',
-            'params' => array('invoke_test'),
+            'params'  => array('invoke_test'),
+            'data'    => array()
         ));
 
         $this->assertEquals('invoke_test', $this->advice->around($this->context));
@@ -30,7 +35,7 @@ class InvocationAdviceTest extends \PHPUnit_Framework_TestCase
         $this->context->setOptions(array(
             'context' => __NAMESPACE__ . '\\data',
             'data'    => array('value' => array('id' => 1, 'val' => 'Hello World!')),
-            'params' => array(),
+            'params'  => array(),
         ));
 
         $ret = $this->advice->around($this->context);

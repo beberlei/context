@@ -9,6 +9,9 @@
     "require": {
         "symfony/options-resolver": "dev-master"
     },
+    "require-dev": {
+        "mockery/mockery": "*"
+    },
     "autoload": {
         "psr-0": {
             "Context": "src/"

@@ -13,7 +13,7 @@
 
 namespace Context\ParamConverter;
 
-class DateTimeConverter implements ParamConverter
+class DateTimeConverter extends AbstractParamConverter
 {
     public function supports($value, Argument $argument)
     {

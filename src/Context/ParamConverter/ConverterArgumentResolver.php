@@ -15,21 +15,33 @@ namespace Context\ParamConverter;
 
 use Context\Invocation\ContextInvocation;
 
+/**
+ * Argument Resolver that uses converters to transform request
+ * to model-request objects.
+ *
+ * @author Benjamin Eberlei <kontakt@beberlei.de>
+ */
 class ConverterArgumentResolver implements ArgumentResolver
 {
     private $converters = array();
 
+    public function __construct()
+    {
+        $this->converters = new ConverterBag();
+    }
+
     public function addConverter(ParamConverter $converter)
     {
-        $this->converters[$converter->getPriority()][] = $converter;
+        $this->converters->add($converter);
+        $converter->setConverterBag($this->converters);
     }
 
     public function resolve(ContextInvocation $invocation)
     {
-        $options = $invocation->getOptions();
-        $context = $options['context'];
-        $params  = $options['params'];
-        $data    = $options['data'];
+        $options    = $invocation->getOptions();
+        $context    = $options['context'];
+        $params     = $options['params'];
+        $data       = $options['data'];
 
         if (is_array($context)) {
             $r = new \ReflectionMethod($context[0], $context[1]);
@@ -45,7 +57,6 @@ class ConverterArgumentResolver implements ArgumentResolver
             }
         }
 
-        $converters = $this->all();
         foreach ($r->getParameters() as $parameter) {
             $pos      = $parameter->getPosition();
             $argument = Argument::fromReflection($parameter);
@@ -55,41 +66,19 @@ class ConverterArgumentResolver implements ArgumentResolver
                 continue;
             }
 
-            foreach ($converters as $converter) {
-                if ($converter->supports($params[$pos], $argument)) {
-                    $value = $converter->convert($params[$pos], $argument, $data);
-                    if ($value !== null) {
-                        $params[$pos] = $value;
-                        break 2;
-                    }
+            $params[$pos] = $this->converters->convert($params[$pos], $argument, $data);
+
+            if ( $params[$pos] === null) {
+                if ( ! $argument->isOptional()) {
+                    throw new \RuntimeException("Could not resolve value for argumente named '" . $argument->getName() . "'");
                 }
-            }
 
-            if ( ! $argument->isOptional()) {
-                throw new \RuntimeException("Could not resolve value for argumente named '" . $argument->getName() . "'");
+                $params[$pos] = $argument->getDefaultValue();
             }
-
-            $params[$pos] = $argument->getDefaultValue();
         }
 
         return $params;
     }
 
-   /**
-    * Returns all registered param converters.
-    *
-    * @return array An array of param converters
-    */
-   public function all()
-   {
-       krsort($this->converters);
-
-       $converters = array();
-       foreach ($this->converters as $all) {
-           $converters = array_merge($converters, $all);
-       }
-
-       return $converters;
-   }
 }
 

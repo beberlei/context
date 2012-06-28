@@ -18,6 +18,10 @@ use Symfony\Component\OptionsResolver\Options;
 
 use Context\Invocation\InvocationAdvice;
 use Context\Invocation\Advice;
+
+use Context\ParamConverter\ArgumentResolver;
+use Context\ParamConverter\ParamsArgumentResolver;
+
 use Context\Plugins\ExceptionHandler\ExceptionAdvice;
 
 /**
@@ -33,9 +37,15 @@ class Engine
      */
     private $advices = array();
 
-    public function __construct()
+    /**
+     * @var ArgumentResolver
+     */
+    private $argumentResolver;
+
+    public function __construct(ArgumentResolver $resolver = null)
     {
         $this->advices[] = new ExceptionAdvice();
+        $this->resolver = $resolver ?: new ParamsArgumentResolver();
     }
 
     /**
@@ -66,6 +76,14 @@ class Engine
     }
 
     /**
+     * @param ParamConverter $converter
+     */
+    public function addParamConverter(ParamConverter $converter)
+    {
+        $this->resolver->addParamConverter($converter);
+    }
+
+    /**
      * Execute a context from within the Engine.
      *
      * @param array $options
@@ -78,7 +96,7 @@ class Engine
 
     private function createContextInvocation($options)
     {
-        $advices = array_merge($this->advices, array(new InvocationAdvice()));
+        $advices = array_merge($this->advices, array(new InvocationAdvice($this->argumentResolver)));
         $options = $this->resolveOptions($options, $advices);
 
         return new Invocation\ContextInvocation($options, $advices);

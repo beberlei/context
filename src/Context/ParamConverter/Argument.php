@@ -30,14 +30,14 @@ class Argument
     {
         return new self(
             $param->getName(),
-            $param->getClass(),
+            $param->getClass() ? $param->getClass()->getName() : null,
             $param->isArray(),
             $param->isOptional(),
             $param->isOptional() ? $param->getDefaultValue() : null
         );
     }
 
-    public function __construct($name, $class, $isArray, $isOptional, $defaultValue)
+    public function __construct($name, $class, $isArray = false, $isOptional = false, $defaultValue = null)
     {
         $this->name         = $name;
         $this->class        = $class;

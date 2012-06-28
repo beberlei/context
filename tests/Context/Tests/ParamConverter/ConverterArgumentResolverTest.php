@@ -4,8 +4,9 @@ namespace Context\Tests\ParamConverter;
 
 use Context\ParamConverter\ConverterArgumentResolver;
 use Context\Invocation\ContextInvocation;
+use Context\Tests\TestCase;
 
-class ConverterArgumentResolverTest extends \PHPUnit_Framework_TestCase
+class ConverterArgumentResolverTest extends TestCase
 {
     public function testResolveEmpty()
     {
@@ -31,10 +32,11 @@ class ConverterArgumentResolverTest extends \PHPUnit_Framework_TestCase
             'data'    => array(),
         ));
 
-        $converter = $this->getMock('Context\ParamConverter\ParamConverter');
-        $converter->expects($this->at(0))->method('getPriority')->will($this->returnValue(1));
-        $converter->expects($this->at(1))->method('supports')->will($this->returnValue(true));
-        $converter->expects($this->at(2))->method('convert')->will($this->returnValue('bar'));
+        $converter = $this->mock('Context\ParamConverter\ParamConverter');
+        $converter->shouldReceive('setConverterBag');
+        $converter->shouldReceive('getPriority')->andReturn(1);
+        $converter->shouldReceive('supports')->andReturn(true);
+        $converter->shouldReceive('convert')->andReturn('bar');
 
         $resolver = new ConverterArgumentResolver();
         $resolver->addConverter($converter);
@@ -52,15 +54,15 @@ class ConverterArgumentResolverTest extends \PHPUnit_Framework_TestCase
             'data'    => array(),
         ));
 
-        $converter1 = $this->getMock('Context\ParamConverter\ParamConverter');
-        $converter1->expects($this->at(0))->method('getPriority')->will($this->returnValue(1));
-        $converter1->expects($this->never())->method('supports');
-        $converter1->expects($this->never())->method('convert');
+        $converter1 = $this->mock('Context\ParamConverter\ParamConverter');
+        $converter1->shouldReceive('setConverterBag');
+        $converter1->shouldReceive('getPriority')->andReturn(1);
 
-        $converter2 = $this->getMock('Context\ParamConverter\ParamConverter');
-        $converter2->expects($this->at(0))->method('getPriority')->will($this->returnValue(2));
-        $converter2->expects($this->at(1))->method('supports')->will($this->returnValue(true));
-        $converter2->expects($this->at(2))->method('convert')->will($this->returnValue('baz'));
+        $converter2 = $this->mock('Context\ParamConverter\ParamConverter');
+        $converter2->shouldReceive('setConverterBag');
+        $converter2->shouldReceive('getPriority')->andReturn(2);
+        $converter2->shouldReceive('supports')->andReturn(true);
+        $converter2->shouldReceive('convert')->andReturn('baz');
 
         $resolver = new ConverterArgumentResolver();
         $resolver->addConverter($converter1);

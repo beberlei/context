@@ -13,7 +13,7 @@
 
 namespace Context\ParamConverter;
 
-class ObjectConverter implements ParamConverter
+class ObjectConverter extends AbstractParamConverter
 {
     public function supports($value, Argument $argument)
     {
@@ -41,15 +41,15 @@ class ObjectConverter implements ParamConverter
             foreach ($constructor->getParameters() as $parameter) {
                 $argValue = null;
 
-                if (isset($value[ $parameter->getName] )) {
+                if (isset($value[ $parameter->getName()] )) {
                     $argValue = $value[$parameter->getName()];
-                    unset($properties[$parameter->getName]);
+                    unset($properties[$parameter->getName()]);
                 } else if ($parameter->isOptional()) {
                     $argValue = $parameter->getDefaultValue();
                 }
 
-                // redelegate to param converter here!
-                $args[] = $argValue;
+                $constructorArg = Argument::fromReflection($parameter);
+                $args[] = $this->converters->convert($argValue, $constructorArg, null);
             }
         }
 

@@ -18,5 +18,6 @@ interface ParamConverter
     function supports($value, Argument $parameter);
     function convert($value, Argument $parameter, $data);
     function getPriority();
+    function setConverterBag(ConverterBag $converters);
 }
 
