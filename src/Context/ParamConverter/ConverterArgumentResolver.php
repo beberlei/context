@@ -53,7 +53,10 @@ class ConverterArgumentResolver implements ArgumentResolver
             foreach ($r->getParameters() as $parameter) {
                 $params[$parameter->getPosition()] = isset($data[$parameter->getName()])
                     ? $data[$parameter->getName()]
-                    : null;
+                    : (isset($data[$parameter->getPosition()])
+                        ? $data[$parameter->getPosition()]
+                        : null
+                    );
             }
         }
 

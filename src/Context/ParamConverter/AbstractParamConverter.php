@@ -17,10 +17,6 @@ abstract class AbstractParamConverter implements ParamConverter
 {
     protected $converters;
 
-    abstract public function supports($value, Argument $parameter);
-    abstract public function convert($value, Argument $parameter, $data);
-    abstract public function getPriority();
-
     public function setConverterBag(ConverterBag $converterBag)
     {
         $this->converters = $converterBag;

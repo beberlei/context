@@ -28,6 +28,7 @@ class ObjectConverter extends AbstractParamConverter
         $constructor = $reflClass->getConstructor();
         $args        = array();
         $properties  = array();
+        $methods     = array();
 
         foreach ($reflClass->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
             $propertyName = $property->getName();
@@ -37,13 +38,23 @@ class ObjectConverter extends AbstractParamConverter
             }
         }
 
+        foreach ($reflClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            $propertyName = lcfirst(substr($method->getName(), 3));
+
+            if (strpos($method->getName(), "set") === 0 && isset($value[$propertyName])) {
+                $methods[$propertyName] = $method;
+                unset($properties[$propertyName]);
+            }
+        }
+
         if ($constructor) {
             foreach ($constructor->getParameters() as $parameter) {
-                $argValue = null;
+                $argValue      = null;
+                $parameterName = $parameter->getName();
 
-                if (isset($value[ $parameter->getName()] )) {
-                    $argValue = $value[$parameter->getName()];
-                    unset($properties[$parameter->getName()]);
+                if (isset($value[$parameterName])) {
+                    $argValue = $value[$parameterName];
+                    unset($properties[$parameterName], $methods[$parameterName]);
                 } else if ($parameter->isOptional()) {
                     $argValue = $parameter->getDefaultValue();
                 }
@@ -54,8 +65,16 @@ class ObjectConverter extends AbstractParamConverter
         }
 
         $object = $reflClass->newInstanceArgs($args);
-        foreach ($properties as $propertyName => $value) {
-            $object->$propertyName = $value;
+
+        foreach ($methods as $name => $method) {
+            $parameters = $method->getParameters();
+            $methodArg  = Argument::fromReflection($parameters[0]);
+
+            $method->invoke($object, $value[$name]);
+        }
+
+        foreach ($properties as $propertyName => $propertyValue) {
+            $object->$propertyName = $propertyValue;
         }
 
         return $object;

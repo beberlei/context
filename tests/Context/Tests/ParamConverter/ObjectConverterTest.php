@@ -50,6 +50,17 @@ class ObjectConverterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $convertedValue->obj2->foo);
         $this->assertEquals(2, $convertedValue->obj2->bar);
     }
+
+    public function testConvertMapsToObjectSetter()
+    {
+        $argument = new Argument("foo", __NAMESPACE__ . "\ConvertObject4");
+
+        $convertedValue  = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, null);
+
+        $this->assertInstanceOf(__NAMESPACE__ . '\ConvertObject4', $convertedValue);
+        $this->assertEquals(-1, $convertedValue->foo);
+        $this->assertEquals(-2, $convertedValue->bar);
+    }
 }
 
 class ConvertObject1
@@ -75,5 +86,20 @@ class ConvertObject3
     public function __construct(ConvertObject2 $obj2)
     {
         $this->obj2 = $obj2;
+    }
+}
+
+class ConvertObject4
+{
+    public $foo;
+    public $bar;
+
+    public function setFoo($foo)
+    {
+        $this->foo = $foo * -1;
+    }
+    public function setBar($bar)
+    {
+        $this->bar = $bar * -1;
     }
 }

@@ -45,7 +45,7 @@ class Engine
     public function __construct(ArgumentResolver $resolver = null)
     {
         $this->advices[] = new ExceptionAdvice();
-        $this->resolver = $resolver ?: new ParamsArgumentResolver();
+        $this->resolver  = $resolver ?: new ParamsArgumentResolver();
     }
 
     /**

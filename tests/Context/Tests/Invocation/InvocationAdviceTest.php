@@ -57,3 +57,4 @@ function data(Data $value)
 {
     return $value;
 }
+

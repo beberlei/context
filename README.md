@@ -48,15 +48,6 @@ computes the average, variance and standard deviation of a list of numbers.
 
     class Calculator
     {
-        public function square($x)
-        {
-            if ( ! is_numeric($x)) {
-                throw new \InvalidArgumentException("Input values are not numeric.");
-            }
-
-            return $x * $x;
-        }
-
         public function statistics(array $numbers)
         {
             if (count($numbers) > count(array_filter($numbers, 'is_numeric'))) {
@@ -74,6 +65,15 @@ computes the average, variance and standard deviation of a list of numbers.
                 'variance'          => $variance,
                 'standardDeviation' => $standardDeviation,
             );
+        }
+
+        public function square($x)
+        {
+            if ( ! is_numeric($x)) {
+                throw new \InvalidArgumentException("Input values are not numeric.");
+            }
+
+            return $x * $x;
         }
     }
 
@@ -161,19 +161,19 @@ Or for the second:
     $engine->addInput(new \Context\Input\GetOptInput());
 
     $stats   = $engine->execute(array(
-        'context' => array($calculator, 'statistics'),
+        'context'      => array($calculator, 'statistics'),
         'shortOptions' => "n:",
-        "longOptions" => array("number:"),
+        "longOptions"  => array("number:"),
     ));
 
 There are two concepts at work inside the Context Engine, when a request model is created
 from application inputs:
 
-    1. Input instances are sources for input parameters
-       during creation of the request model.
-    2. Parameter converters look at the method signature of
-       your model and convert application input into model
-       request input based on rules and priorities.
+1. Input instances are sources for input parameters
+   during creation of the request model.
+2. Parameter converters look at the method signature of
+   your model and convert application input into model
+   request input based on rules and priorities.
 
 ## Input sources
 
@@ -200,7 +200,6 @@ framework you are using.
 
 * CommaSeperatedListConverter - Converters a comma-seperated string into an array.
 * DateTimeConverter - Converts a string or an array into a DateTime instance.
-* DateIntervalConverter - Converts a string or an array into a DateInterval instance.
 * ObjectConverter - Converts an array into an object by mapping keys of the array to constructor argument names, setter or public properties.
 * EventArgsConverter - Converts a request into an "EventArgs" argument to the model, containing source and data of the event.
 * ServiceConverter - Grabs requested services based on type-hint information from a service registry.
