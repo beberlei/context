@@ -21,7 +21,7 @@ use ReflectionParameter;
 class Argument
 {
     private $name;
-    private $type;
+    private $class;
     private $isArray;
     private $isOptional;
     private $defaultValue;
@@ -37,10 +37,10 @@ class Argument
         );
     }
 
-    public function __construct($name, $type, $isArray, $isOptional, $defaultValue)
+    public function __construct($name, $class, $isArray, $isOptional, $defaultValue)
     {
         $this->name         = $name;
-        $this->type         = $type;
+        $this->class        = $class;
         $this->isArray      = $isArray;
         $this->isOptional   = $isOptional;
         $this->defaultValue = $defaultValue;
@@ -51,9 +51,9 @@ class Argument
         return $this->name;
     }
 
-    public function getType()
+    public function getClass()
     {
-        return $this->type;
+        return $this->class;
     }
 
     public function isArray()

@@ -39,7 +39,7 @@ class ConverterArgumentResolver implements ArgumentResolver
 
         if ( ! $params) {
             foreach ($r->getParameters() as $parameter) {
-                $params[$parameter->getPosition()] = isset($data[$parameter->getName()]) 
+                $params[$parameter->getPosition()] = isset($data[$parameter->getName()])
                     ? $data[$parameter->getName()]
                     : null;
             }
@@ -49,17 +49,15 @@ class ConverterArgumentResolver implements ArgumentResolver
         foreach ($r->getParameters() as $parameter) {
             $pos      = $parameter->getPosition();
             $argument = Argument::fromReflection($parameter);
-            $class    = $argument->getType();
+            $class    = $argument->getClass();
 
             if ($class && $params[$pos] instanceof $class) {
                 continue;
             }
 
-            $targetType = $class ?: ($argument->isArray() ? 'array' : 'scalar');
-
             foreach ($converters as $converter) {
-                if ($converter->supports($params[$pos], $targetType)) {
-                    $value = $converter->convert($params[$pos], $targetType, $data);
+                if ($converter->supports($params[$pos], $argument)) {
+                    $value = $converter->convert($params[$pos], $argument, $data);
                     if ($value !== null) {
                         $params[$pos] = $value;
                         break 2;

@@ -15,19 +15,21 @@ namespace Context\ParamConverter;
 
 class DateTimeConverter implements ParamConverter
 {
-    public function supports($value, $targetType)
+    public function supports($value, Argument $argument)
     {
+        $targetType = $argument->getClass();
         return $targetType === 'DateTime' || is_subclass_of($targetType, 'DateTime');
     }
 
-    public function convert($value, $targetType, $data)
+    public function convert($value, Argument $argument, $data)
     {
+        $targetType = $argument->getClass();
         return new $targetType($value);
     }
 
     public function getPriority()
     {
-        return 0;
+        return 3;
     }
 }
 
