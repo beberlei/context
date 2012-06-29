@@ -11,29 +11,32 @@
  * to kontakt@beberlei.de so I can send you a copy immediately.
  */
 
-namespace Context\Input;
+namespace Context\Plugins\Symfony2\Input;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Context\Input\InputSource;
 
-/**
- * Merge $_GET and $_POST superglobals into pool of data.
- *
- * @author Benjamin Eberlei <kontakt@beberlei.de>
- */
-class PhpSuperGlobalsInput implements InputSource
+class SerializerInput implements InputSource
 {
+    private $serializer;
+
     public function hasData(array $options)
     {
-        return (php_sapi_name() !== "cli");
     }
 
     public function addData(array $options, array $data)
     {
-        return array_merge($data, $_GET, $_POST);
+        return array_merge(
+            $data,
+            $options['request']->query->all(),
+            $options['request']->request->all(),
+            $options['request']->attributes->all()
+        );
     }
 
     public function addDefaultOptions(OptionsResolverInterface $resolver)
     {
+        $resolver->replaceDefaults(array('request' => null));
     }
 }
 
