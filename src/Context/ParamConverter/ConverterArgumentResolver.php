@@ -43,6 +43,12 @@ class ConverterArgumentResolver implements ArgumentResolver
         $params  = $options['params'];
         $data    = $options['data'];
 
+        if (is_string($data)) {
+            $data = new RequestData(array(), $data);
+        } else if (is_array($data)) {
+            $data = new RequestData($data, null);
+        }
+
         if (is_array($context)) {
             $r = new \ReflectionMethod($context[0], $context[1]);
         } else {
@@ -51,10 +57,10 @@ class ConverterArgumentResolver implements ArgumentResolver
 
         if ( ! $params) {
             foreach ($r->getParameters() as $parameter) {
-                $params[$parameter->getPosition()] = isset($data[$parameter->getName()])
-                    ? $data[$parameter->getName()]
-                    : (isset($data[$parameter->getPosition()])
-                        ? $data[$parameter->getPosition()]
+                $params[$parameter->getPosition()] = $data->has($parameter->getName())
+                    ? $data->get($parameter->getName())
+                    : ($data->has($parameter->getPosition())
+                        ? $data->get($parameter->getPosition())
                         : null
                     );
             }

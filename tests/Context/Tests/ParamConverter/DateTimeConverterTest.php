@@ -3,6 +3,7 @@ namespace Context\Tests\ParamConverter;
 
 use Context\ParamConverter\DateTimeConverter;
 use Context\ParamConverter\Argument;
+use Context\ParamConverter\RequestData;
 
 class DateTimeConverterTest extends \PHPUnit_Framework_TestCase
 {
@@ -22,7 +23,7 @@ class DateTimeConverterTest extends \PHPUnit_Framework_TestCase
 
     public function testConvert()
     {
-        $datetime = $this->converter->convert('2010-01-01', new Argument('a', 'DateTime', false, false, null), array());
+        $datetime = $this->converter->convert('2010-01-01', new Argument('a', 'DateTime', false, false, null), new RequestData);
         $this->assertInstanceOf('DateTime', $datetime);
         $this->assertEquals('2010-01-01', $datetime->format('Y-m-d'));
     }

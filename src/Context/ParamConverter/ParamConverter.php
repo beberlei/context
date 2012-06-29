@@ -16,7 +16,7 @@ namespace Context\ParamConverter;
 interface ParamConverter
 {
     function supports($value, Argument $parameter);
-    function convert($value, Argument $parameter, $data);
+    function convert($value, Argument $parameter, RequestData $data);
     function getPriority();
     function setConverterBag(ConverterBag $converters);
 }

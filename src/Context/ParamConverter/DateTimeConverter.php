@@ -21,7 +21,7 @@ class DateTimeConverter extends AbstractParamConverter
         return $targetType === 'DateTime' || is_subclass_of($targetType, 'DateTime');
     }
 
-    public function convert($value, Argument $argument, $data)
+    public function convert($value, Argument $argument, RequestData $data)
     {
         $targetType = $argument->getClass();
         return new $targetType($value);

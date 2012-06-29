@@ -20,7 +20,7 @@ class ObjectConverter extends AbstractParamConverter
         return $argument->getClass() !== null && is_array($value);
     }
 
-    public function convert($value, Argument $argument, $data)
+    public function convert($value, Argument $argument, RequestData $data)
     {
         $targetClass = $argument->getClass();
         $reflClass   = new \ReflectionClass($targetClass);
@@ -60,7 +60,7 @@ class ObjectConverter extends AbstractParamConverter
                 }
 
                 $constructorArg = Argument::fromReflection($parameter);
-                $args[] = $this->converters->convert($argValue, $constructorArg, null);
+                $args[] = $this->converters->convert($argValue, $constructorArg, new RequestData);
             }
         }
 

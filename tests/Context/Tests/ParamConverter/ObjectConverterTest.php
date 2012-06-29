@@ -4,6 +4,7 @@ namespace Context\Tests\ParamConverter;
 use Context\ParamConverter\Argument;
 use Context\ParamConverter\ObjectConverter;
 use Context\ParamConverter\ConverterBag;
+use Context\ParamConverter\RequestData;
 
 class ObjectConverterTest extends \PHPUnit_Framework_TestCase
 {
@@ -21,7 +22,7 @@ class ObjectConverterTest extends \PHPUnit_Framework_TestCase
     {
         $argument = new Argument("foo", __NAMESPACE__ . "\ConvertObject1");
 
-        $convertedValue  = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, null);
+        $convertedValue  = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, new RequestData);
 
         $this->assertInstanceOf(__NAMESPACE__ . '\ConvertObject1', $convertedValue);
         $this->assertEquals(-1, $convertedValue->foo);
@@ -32,7 +33,7 @@ class ObjectConverterTest extends \PHPUnit_Framework_TestCase
     {
         $argument = new Argument("foo", __NAMESPACE__ . "\ConvertObject2");
 
-        $convertedValue = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, null);
+        $convertedValue = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, new RequestData);
 
         $this->assertInstanceOf(__NAMESPACE__ . '\ConvertObject2', $convertedValue);
         $this->assertEquals(1, $convertedValue->foo);
@@ -43,7 +44,7 @@ class ObjectConverterTest extends \PHPUnit_Framework_TestCase
     {
         $argument = new Argument("foo", __NAMESPACE__ . "\ConvertObject3");
 
-        $convertedValue = $this->converter->convert(array("obj2" => array("foo" => 1, "bar" => 2)), $argument, null);
+        $convertedValue = $this->converter->convert(array("obj2" => array("foo" => 1, "bar" => 2)), $argument, new RequestData);
 
         $this->assertInstanceOf(__NAMESPACE__ . '\ConvertObject3', $convertedValue);
         $this->assertInstanceOf(__NAMESPACE__ . '\ConvertObject2', $convertedValue->obj2);
@@ -55,7 +56,7 @@ class ObjectConverterTest extends \PHPUnit_Framework_TestCase
     {
         $argument = new Argument("foo", __NAMESPACE__ . "\ConvertObject4");
 
-        $convertedValue  = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, null);
+        $convertedValue  = $this->converter->convert(array("foo" => 1, "bar" => 2), $argument, new RequestData);
 
         $this->assertInstanceOf(__NAMESPACE__ . '\ConvertObject4', $convertedValue);
         $this->assertEquals(-1, $convertedValue->foo);
