@@ -49,11 +49,31 @@ class Engine
      */
     private $argumentResolver;
 
+    private $defaultOptions = array();
+
     public function __construct(ArgumentResolver $resolver = null, InputAdvice $inputAdvice = null, ExceptionAdvice $exAdvice = null)
     {
         $this->inputAdvice     = $inputAdvice ?: new InputAdvice();
         $this->exceptionAdvice = $exAdvice ?: new ExceptionAdvice();
         $this->resolver        = $resolver ?: new ParamsArgumentResolver();
+    }
+
+    /**
+     * Set default options to be merged into every invocations options.
+     *
+     * @param array $options
+     */
+    public function setDefaultOptions(array $options)
+    {
+        $this->defaultOptions = $options;
+    }
+
+    /**
+     * Add default options to be merged into every invocations options.
+     */
+    public function addDefaultOptions(array $options)
+    {
+        $this->defaultOptions = array_merge($this->defaultOptions, $options);
     }
 
     /**
@@ -120,6 +140,7 @@ class Engine
             array(new InvocationAdvice($this->argumentResolver))
         );
 
+        $options = array_merge($this->defaultOptions, $options);
         $options = $this->resolveOptions($options, $advices);
 
         return new Invocation\ContextInvocation($options, $advices);

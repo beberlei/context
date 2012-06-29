@@ -46,4 +46,21 @@ class EngineTest extends \PHPUnit_Framework_TestCase
             'disable_exception_handler' => true,
         ));
     }
+
+    /**
+     * @test
+     */
+    public function executeWithDefaultOptions()
+    {
+        $engine = new Engine();
+        $mock = $this->getMock('ContextDefaultMock', array('execute'));
+        $mock->expects($this->once())->method('execute');
+
+        $engine->setDefaultOptions(array(
+            'context' => array($mock, 'execute'),
+            'disable_exception_handler' => true,
+        ));
+
+        $engine->execute(array());
+    }
 }
