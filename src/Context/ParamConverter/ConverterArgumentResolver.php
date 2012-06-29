@@ -38,10 +38,10 @@ class ConverterArgumentResolver implements ArgumentResolver
 
     public function resolve(ContextInvocation $invocation)
     {
-        $options    = $invocation->getOptions();
-        $context    = $options['context'];
-        $params     = $options['params'];
-        $data       = $options['data'];
+        $options = $invocation->getOptions();
+        $context = $options['context'];
+        $params  = $options['params'];
+        $data    = $options['data'];
 
         if (is_array($context)) {
             $r = new \ReflectionMethod($context[0], $context[1]);

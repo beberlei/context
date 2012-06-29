@@ -19,6 +19,9 @@ use Symfony\Component\OptionsResolver\Options;
 use Context\Invocation\InvocationAdvice;
 use Context\Invocation\Advice;
 
+use Context\Input\InputAdvice;
+use Context\Input\InputSource;
+
 use Context\ParamConverter\ArgumentResolver;
 use Context\ParamConverter\ParamsArgumentResolver;
 
@@ -37,15 +40,30 @@ class Engine
      */
     private $advices = array();
 
+    private $inputAdvice;
+
+    private $exceptionAdvice;
+
     /**
      * @var ArgumentResolver
      */
     private $argumentResolver;
 
-    public function __construct(ArgumentResolver $resolver = null)
+    public function __construct(ArgumentResolver $resolver = null, InputAdvice $inputAdvice = null, ExceptionAdvice $exAdvice = null)
     {
-        $this->advices[] = new ExceptionAdvice();
-        $this->resolver  = $resolver ?: new ParamsArgumentResolver();
+        $this->inputAdvice     = $inputAdvice ?: new InputAdvice();
+        $this->exceptionAdvice = $exAdvice ?: new ExceptionAdvice();
+        $this->resolver        = $resolver ?: new ParamsArgumentResolver();
+    }
+
+    /**
+     * Add a new input source
+     *
+     * @param InputSource $source
+     */
+    public function addInputSource(InputSource $source)
+    {
+        $this->inputAdice->addSource($source);
     }
 
     /**
@@ -96,7 +114,12 @@ class Engine
 
     private function createContextInvocation($options)
     {
-        $advices = array_merge($this->advices, array(new InvocationAdvice($this->argumentResolver)));
+        $advices = array_merge(
+            array($this->inputAdvice, $this->exceptionAdvice),
+            $this->advices,
+            array(new InvocationAdvice($this->argumentResolver))
+        );
+
         $options = $this->resolveOptions($options, $advices);
 
         return new Invocation\ContextInvocation($options, $advices);
