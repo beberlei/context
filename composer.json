@@ -12,7 +12,8 @@
     "require-dev": {
         "mockery/mockery": "*",
         "jms/serializer-bundle": "*",
-        "symfony/http-foundation": "*"
+        "symfony/http-foundation": "*",
+        "symfony/form": "*"
     },
     "autoload": {
         "psr-0": {

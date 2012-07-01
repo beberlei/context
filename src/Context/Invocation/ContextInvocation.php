@@ -32,6 +32,16 @@ class ContextInvocation
         $this->advices = $advices;
     }
 
+    public function getOption($name)
+    {
+        return $this->options[$name];
+    }
+
+    public function setOption($name, $value)
+    {
+        $this->options[$name] = $value;
+    }
+
     public function getOptions()
     {
         return $this->options;

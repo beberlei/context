@@ -475,27 +475,27 @@ a form type into its data object and injects it into the parameters.
     <?php
     class SymfonyFormAdvice implements Advice
     {
-        public function around(ContextInvocation $invocation);
+        public function around(ContextInvocation $context)
         {
             $options = $invocation->getOptions();
-            $form    = $this->formFactory->createForm($options['type']);
-
-            if ($options['request']->getMethod() !== 'POST') {
-                $failureHandler = $options['failure'];
-                return $failureHandler($form);
-            }
+            $data    = $options['data'];
+            $form    = $this->formFactory->createForm($options['formType'], $options['formData'], $options['formOptions']);
 
             $form->bindRequest($options['request']);
+            $data->set('form', $form);
+            $data->set('formData', $form->getData());
 
             if ( ! $form->isValid()) {
-                return $failureHandler($form);
+                $invocation->setOption('context', $options['invalid']);
+
+                return $invocation->invoke();
             }
 
-            $options['params'][$form->getName()] = $form->getData();
+            $response = $invocation->invoke();
+            $data->set('form_response', $response);
+            $invocation->setOption('context', $options['success']);
 
-            $data = $innvocation->invoke();
-            $successCallback = $options['success'];
-            return $successCallback($data);
+            return $invocation->invoke();
         }
     }
 
@@ -530,10 +530,10 @@ closures as event:
         public function registerAction()
         {
             return $this->executeContext(array(
-                'context' => array(new RegisterUserContext(), 'execute'),
-                'type'    => new UserType(),
-                'success' => array($this, 'registerSuccess'),
-                'failure' => array($this, 'registerActionFailure'),
+                'context'  => array(new RegisterUserContext(), 'execute'),
+                'formType' => new UserType(),
+                'success'  => array($this, 'registerSuccess'),
+                'failure'  => array($this, 'registerActionFailure'),
             ));
         }
     }

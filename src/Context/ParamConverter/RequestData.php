@@ -28,6 +28,11 @@ class RequestData
         $this->metadata   = $metadata;
     }
 
+    public function all()
+    {
+        return $this->parameters;
+    }
+
     public function has($name)
     {
         return array_key_exists($name, $this->parameters);
@@ -38,6 +43,11 @@ class RequestData
         return array_key_exists($name, $this->parameters)
             ? $this->parameters[$name]
             : $default;
+    }
+
+    public function set($name, $data)
+    {
+        $this->parameters[$name] = $data;
     }
 
     public function hasRawInput()
