@@ -16,9 +16,10 @@ class DateTimeConverterTest extends \PHPUnit_Framework_TestCase
 
     public function testSupports()
     {
-        $this->assertTrue($this->converter->supports(null, new Argument('a', 'DateTime', false, false, null)));
-        $this->assertTrue($this->converter->supports(null, new Argument('a', 'Context\Tests\ParamConverter\DateTime', false, false, null)));
-        $this->assertFalse($this->converter->supports(null, new Argument('a', 'stdClass', false, false, null)));
+        $rd = new RequestData;
+        $this->assertTrue($this->converter->supports(null, new Argument('a', 'DateTime', false, false, null), $rd));
+        $this->assertTrue($this->converter->supports(null, new Argument('a', 'Context\Tests\ParamConverter\DateTime', false, false, null), $rd));
+        $this->assertFalse($this->converter->supports(null, new Argument('a', 'stdClass', false, false, null), $rd));
     }
 
     public function testConvert()

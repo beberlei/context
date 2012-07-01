@@ -15,7 +15,7 @@ namespace Context\ParamConverter;
 
 class ObjectConverter extends AbstractParamConverter
 {
-    public function supports($value, Argument $argument)
+    public function supports($value, Argument $argument, RequestData $data)
     {
         return $argument->getClass() !== null && is_array($value);
     }
@@ -82,7 +82,7 @@ class ObjectConverter extends AbstractParamConverter
 
     public function getPriority()
     {
-        return 0;
+        return 1;
     }
 }
 

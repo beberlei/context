@@ -10,7 +10,9 @@
         "symfony/options-resolver": "dev-master"
     },
     "require-dev": {
-        "mockery/mockery": "*"
+        "mockery/mockery": "*",
+        "jms/serializer-bundle": "*",
+        "symfony/http-foundation": "*"
     },
     "autoload": {
         "psr-0": {

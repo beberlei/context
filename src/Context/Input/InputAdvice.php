@@ -16,6 +16,7 @@ namespace Context\Input;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Context\Invocation\Advice;
 use Context\Invocation\ContextInvocation;
+use Context\ParamConverter\RequestData;
 
 /**
  * Advice that handles to register additional data automatically
@@ -43,15 +44,24 @@ class InputAdvice implements Advice
     {
         $options = $context->getOptions();
 
-        foreach ($this->sources as $source) {
-            if ($source->hasData()) {
-                $options['data'] = $source->addData($options['data']);
-            }
+        if (empty($options['data'])) {
+            $options['data'] = $this->extractDataFromSources();
         }
 
         $context->setOptions($options);
 
         return $context->invoke();
+    }
+
+    private function extractDataFromSources()
+    {
+        foreach ($this->sources as $source) {
+            if ($source->hasData()) {
+                return $source->createData($options['data']);
+            }
+        }
+
+        return new RequestData(array(), null);
     }
 }
 

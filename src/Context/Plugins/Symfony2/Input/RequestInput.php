@@ -16,6 +16,7 @@ namespace Context\Plugins\Symfony2\Input;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Context\Input\InputSource;
+use Context\ParamConverter\RequestData;
 
 class RequestInput implements InputSource
 {
@@ -24,14 +25,15 @@ class RequestInput implements InputSource
         return ($options['request'] instanceof Request);
     }
 
-    public function addData(array $options, array $data)
+    public function createData(array $options)
     {
-        return array_merge(
-            $data,
+        return new RequestData(array_merge(
             $options['request']->query->all(),
             $options['request']->request->all(),
             $options['request']->attributes->all()
-        );
+        ), $options['request']->getContent(), array(
+            'format' => $options['request']->attributes->get('_format'),
+        ));
     }
 
     public function addDefaultOptions(OptionsResolverInterface $resolver)

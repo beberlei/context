@@ -14,6 +14,7 @@
 namespace Context\Input;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Context\ParamConverter\RequestData;
 
 /**
  * Merge $_GET and $_POST superglobals into pool of data.
@@ -27,9 +28,20 @@ class PhpSuperGlobalsInput implements InputSource
         return (php_sapi_name() !== "cli");
     }
 
-    public function addData(array $options, array $data)
+    public function createData(array $options)
     {
-        return array_merge($data, $_GET, $_POST);
+        $content = file_get_contents("php://stdin");
+
+        if (isset($_SERVER['HTTP_CONTENT_TYPE']) &&
+            in_array($_SERVER['REQUEST_METHOD'], array('PUT', 'PATCH', 'DELETE')) &&
+            $_SERVER['HTTP_CONTENT_TYPE'] == 'application/x-www-form-urlencoded') {
+
+            parse_str($content, $_POST);
+        }
+
+        $parameters = array_merge($_GET, $_POST);
+
+        return new RequestData($parameters, $content);
     }
 
     public function addDefaultOptions(OptionsResolverInterface $resolver)

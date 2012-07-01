@@ -17,12 +17,15 @@ class RequestData
 {
     private $parameters = array();
 
+    private $metadata = array();
+
     private $rawInput;
 
-    public function __construct(array $parameters = array(), $rawInput = null)
+    public function __construct(array $parameters = array(), $rawInput = null, array $metadata = array())
     {
         $this->parameters = $parameters;
         $this->rawInput   = $rawInput;
+        $this->metadata   = $metadata;
     }
 
     public function has($name)
@@ -30,9 +33,11 @@ class RequestData
         return array_key_exists($name, $this->parameters);
     }
 
-    public function get($name)
+    public function get($name, $default = null)
     {
-        return $this->parameters[$name];
+        return array_key_exists($name, $this->parameters)
+            ? $this->parameters[$name]
+            : $default;
     }
 
     public function hasRawInput()
@@ -43,6 +48,13 @@ class RequestData
     public function getRawInput()
     {
         return $this->rawInput;
+    }
+
+    public function getMetadata($name, $default = null)
+    {
+        return array_key_exists($name, $this->metadata)
+            ? $this->metadata[$name]
+            : $default;
     }
 }
 

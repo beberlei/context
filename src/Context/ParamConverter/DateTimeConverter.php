@@ -15,7 +15,7 @@ namespace Context\ParamConverter;
 
 class DateTimeConverter extends AbstractParamConverter
 {
-    public function supports($value, Argument $argument)
+    public function supports($value, Argument $argument, RequestData $data)
     {
         $targetType = $argument->getClass();
         return $targetType === 'DateTime' || is_subclass_of($targetType, 'DateTime');

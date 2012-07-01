@@ -14,11 +14,12 @@
 namespace Context\Input;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Context\ParamConverter\RequestData;
 
 interface InputSource
 {
     function hasData(array $options);
-    function addData(array $options, array $data);
+    function createData(array $options);
     function addDefaultOptions(OptionsResolverInterface $resolver);
 }
 

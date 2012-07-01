@@ -1,5 +1,5 @@
 {
-    "hash": "3b46d11da0ae960c51ecd4a0b75744f0",
+    "hash": "eeff09d4ab3d55e824c21976384417b0",
     "packages": [
         {
             "package": "symfony/options-resolver",
@@ -15,9 +15,42 @@
     ],
     "packages-dev": [
         {
+            "package": "jms/metadata",
+            "version": "dev-master",
+            "source-reference": "dbfbb15b3ffdf96c5ff14e5cd4451d78a7083a36"
+        },
+        {
+            "package": "jms/metadata",
+            "version": "dev-master",
+            "alias-pretty-version": "1.2.x-dev",
+            "alias-version": "1.2.9999999.9999999-dev"
+        },
+        {
+            "package": "jms/serializer-bundle",
+            "version": "dev-master",
+            "source-reference": "b871f131be20fbb1a1a6077a77be486ef076d665"
+        },
+        {
+            "package": "jms/serializer-bundle",
+            "version": "dev-master",
+            "alias-pretty-version": "0.9.x-dev",
+            "alias-version": "0.9.9999999.9999999-dev"
+        },
+        {
             "package": "mockery/mockery",
             "version": "dev-master",
-            "source-reference": "2c5e3244b72d268d8c70935fcceb39b3d84d57db"
+            "source-reference": "f483de234ec528fe52bb4776f8186732cb4d17e6"
+        },
+        {
+            "package": "symfony/http-foundation",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/http-foundation",
+            "version": "dev-master",
+            "source-reference": "ee1c424f8ee48db84a60f8c5bd8dd3b25706e4e9"
         }
     ],
     "aliases": [

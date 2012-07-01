@@ -39,10 +39,10 @@ class ConverterBag
         return $converters;
     }
 
-    public function convert($value, Argument $argument, $data)
+    public function convert($value, Argument $argument, RequestData $data)
     {
         foreach ($this->all() as $converter) {
-            if ($converter->supports($value, $argument)) {
+            if ($converter->supports($value, $argument, $data)) {
                 $convertedValue = $converter->convert($value, $argument, $data);
                 if ($convertedValue !== null) {
                     return $convertedValue;
