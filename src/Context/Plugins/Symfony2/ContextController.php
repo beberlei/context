@@ -24,6 +24,9 @@ use Context\ParamConverter\InstanceConverter;
 
 use Context\Plugins\Symfony2\Input\RequestInput;
 use Context\Plugins\Symfony2\ParamConverter\SerializerConverter;
+use Context\Plugins\Symfony2\FormAdvice;
+
+use Context\Plugins\Doctrine2\TransactionAdvice;
 
 use Exception;
 
@@ -38,11 +41,13 @@ abstract class ContextController extends Controller
         $resolver->addConverter(new DateTimeConverter());
         $resolver->addConverter(new ObjectConverter());
         $resolver->addConverter(new InstanceConverter());
-        $resolver->addConverter(new SerializerConverter());
+        $resolver->addConverter(new SerializerConverter($this->container->get('serializer')));
 
         $engine = new Engine($resolver);
         $engine->addExceptionHandler(array($this, 'onError'));
         $engine->addInputSource(new RequestInput());
+        $engine->addAdvice(new TransactionAdvice($this->container->get('doctrine.orm.default_entity_manager')));
+        $engine->addAdvice(new FormAdvice($this->container->get('form.factory')));
         $engine->setDefaultOptions(array(
             'request' => $this->getRequest()
         ));
