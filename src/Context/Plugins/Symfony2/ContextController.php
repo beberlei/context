@@ -35,6 +35,12 @@ use Exception;
  */
 abstract class ContextController extends Controller
 {
+    /**
+     * Execute a context
+     *
+     * @param array $options
+     * @return mixed
+     */
     public function context(array $options)
     {
         $resolver = new ConverterArgumentResolver();

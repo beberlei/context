@@ -13,7 +13,8 @@
         "mockery/mockery": "*",
         "jms/serializer-bundle": "*",
         "symfony/http-foundation": "*",
-        "symfony/form": "*"
+        "symfony/form": "*",
+        "symfony/framework-bundle": "*"
     },
     "autoload": {
         "psr-0": {

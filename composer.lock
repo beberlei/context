@@ -1,5 +1,5 @@
 {
-    "hash": "488344232924c944e0fcfed9d2653ad9",
+    "hash": "2fef0579195ce7c86461d06c9d6bb552",
     "packages": [
         {
             "package": "symfony/options-resolver",
@@ -15,9 +15,15 @@
     ],
     "packages-dev": [
         {
-            "package": "jms/metadata",
+            "package": "doctrine/common",
             "version": "dev-master",
-            "source-reference": "dbfbb15b3ffdf96c5ff14e5cd4451d78a7083a36"
+            "source-reference": "d2f8a36b8696b446bf25cfe2b0b3aaf03e0835e6"
+        },
+        {
+            "package": "doctrine/common",
+            "version": "dev-master",
+            "alias-pretty-version": "2.3.x-dev",
+            "alias-version": "2.3.9999999.9999999-dev"
         },
         {
             "package": "jms/metadata",
@@ -26,10 +32,9 @@
             "alias-version": "1.2.9999999.9999999-dev"
         },
         {
-            "package": "jms/serializer-bundle",
+            "package": "jms/metadata",
             "version": "dev-master",
-            "alias-pretty-version": "0.9.x-dev",
-            "alias-version": "0.9.9999999.9999999-dev"
+            "source-reference": "dbfbb15b3ffdf96c5ff14e5cd4451d78a7083a36"
         },
         {
             "package": "jms/serializer-bundle",
@@ -37,9 +42,37 @@
             "source-reference": "b871f131be20fbb1a1a6077a77be486ef076d665"
         },
         {
+            "package": "jms/serializer-bundle",
+            "version": "dev-master",
+            "alias-pretty-version": "0.9.x-dev",
+            "alias-version": "0.9.9999999.9999999-dev"
+        },
+        {
             "package": "mockery/mockery",
             "version": "dev-master",
             "source-reference": "f483de234ec528fe52bb4776f8186732cb4d17e6"
+        },
+        {
+            "package": "symfony/config",
+            "version": "dev-master",
+            "source-reference": "5b1a7a0a205b2c465a957142b03f1fc3202966e1"
+        },
+        {
+            "package": "symfony/config",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/dependency-injection",
+            "version": "dev-master",
+            "source-reference": "5ec72a390e4c8a737316f6dc2547f3d368d8bb9b"
+        },
+        {
+            "package": "symfony/dependency-injection",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
         },
         {
             "package": "symfony/event-dispatcher",
@@ -53,6 +86,17 @@
             "source-reference": "v2.1.0-BETA1"
         },
         {
+            "package": "symfony/filesystem",
+            "version": "dev-master",
+            "source-reference": "v2.1.0-BETA1"
+        },
+        {
+            "package": "symfony/filesystem",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
             "package": "symfony/form",
             "version": "dev-master",
             "source-reference": "55d7fe70afe21f7a756efe6d871b1b56c09007ff"
@@ -64,6 +108,17 @@
             "alias-version": "2.1.9999999.9999999-dev"
         },
         {
+            "package": "symfony/framework-bundle",
+            "version": "dev-master",
+            "source-reference": "b706de5521cc0c9777805abbe79b7d038496000a"
+        },
+        {
+            "package": "symfony/framework-bundle",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
             "package": "symfony/http-foundation",
             "version": "dev-master",
             "alias-pretty-version": "2.1.x-dev",
@@ -72,7 +127,24 @@
         {
             "package": "symfony/http-foundation",
             "version": "dev-master",
-            "source-reference": "211cba98f1f068f500b8f9f95b7b0036f458739d"
+            "source-reference": "f28a2ffa86ca77a83e56778ab290b0cd3005f36f"
+        },
+        {
+            "package": "symfony/http-foundation",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/http-kernel",
+            "version": "dev-master",
+            "source-reference": "9d3743d5fbca0a66b0a6a0f106c3b8c90d2aeee6"
+        },
+        {
+            "package": "symfony/http-kernel",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
         },
         {
             "package": "symfony/locale",
@@ -84,6 +156,39 @@
             "package": "symfony/locale",
             "version": "dev-master",
             "source-reference": "3e6e0c21835c958a131c4455bcad207a1faefcad"
+        },
+        {
+            "package": "symfony/routing",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/routing",
+            "version": "dev-master",
+            "source-reference": "6efe2369ad32ccdb648018f2eac83997d2d9b33b"
+        },
+        {
+            "package": "symfony/templating",
+            "version": "dev-master",
+            "source-reference": "f687aa5e1bb953d75c7c93e05ca2d681592eedea"
+        },
+        {
+            "package": "symfony/templating",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/translation",
+            "version": "dev-master",
+            "source-reference": "v2.1.0-BETA1"
+        },
+        {
+            "package": "symfony/translation",
+            "version": "dev-master",
+            "alias-pretty-version": "2.1.x-dev",
+            "alias-version": "2.1.9999999.9999999-dev"
         }
     ],
     "aliases": [
