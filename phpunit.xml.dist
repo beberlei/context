@@ -13,5 +13,10 @@
             <directory>./tests/Context/Tests</directory>
         </testsuite>
     </testsuites>
+    <filter>
+        <whitelist>
+            <directory>src/Context</directory>
+        </whitelist>
+    </filter>
 </phpunit>
 

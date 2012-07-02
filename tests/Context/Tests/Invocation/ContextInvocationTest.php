@@ -1,8 +1,11 @@
 <?php
 namespace Context\Tests\Invocation;
-use Context\Invocation\ContextInvocation;
 
-class ContextInvocationTest extends \PHPUnit_Framework_TestCase
+use Context\Invocation\ContextInvocation;
+use Context\ParamConverter\ArgumentResolver;
+use Context\Tests\TestCase;
+
+class ContextInvocationTest extends TestCase
 {
     public function testOptions()
     {
@@ -12,13 +15,6 @@ class ContextInvocationTest extends \PHPUnit_Framework_TestCase
 
         $invocation->setOptions(array("bar" => "baz"));
         $this->assertEquals(array("bar" => "baz"), $invocation->getOptions());
-    }
-
-    public function testAdviceStackEmpty()
-    {
-        $invocation = new ContextInvocation();
-        $this->setExpectedException("Context\Exception\RuntimeException");
-        $invocation->invoke();
     }
 
     public function testAdviceStack()
@@ -32,5 +28,14 @@ class ContextInvocationTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals("foo", $invocation->invoke());
         $this->assertEquals("bar", $invocation->invoke());
+    }
+
+    public function testInvoke()
+    {
+        $resolver = $this->mock('Context\ParamConverter\ArgumentResolver');
+        $resolver->shouldReceive('resolve')->andReturn(array());
+
+        $invocation = new ContextInvocation(array('context' => function() {}), array(), $resolver);
+        $invocation->invoke();
     }
 }

@@ -15,7 +15,9 @@ namespace Context\Plugins\Symfony2;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\Form\FormTypeInterface;
+use Symfony\Component\Form\FormFactoryInterface;
 use Context\Invocation\Advice;
+use Context\Invocation\ContextInvocation;
 
 /**
  * Symfony Form Advice. If a formType isset and a form related content-type
@@ -43,23 +45,11 @@ class FormAdvice implements Advice
         $this->formFactory = $formFactory;
     }
 
-    public function setDefaultOptions(OptionsResolverInterface $resolver)
-    {
-        $resolver->setDefaults(array(
-            'form_type'    => null,
-            'form_options' => array(),
-            'form_data'    => null,
-            'invalid'     => null,
-            'success'     => null,
-            'request'     => null,
-        ));
-    }
-
-    public function around(ContextInvocation $context)
+    public function around(ContextInvocation $invocation)
     {
         $options = $invocation->getOptions();
 
-        if ( ! ($options['formType'] instanceof FormTypeInterface)) {
+        if ( ! ($options['form_type'] instanceof FormTypeInterface)) {
             return $invocation->invoke();
         }
 
@@ -88,6 +78,18 @@ class FormAdvice implements Advice
         $invocation->setOption('context', $options['success']);
 
         return $invocation->invoke();
+    }
+
+    public function setDefaultOptions(OptionsResolverInterface $resolver)
+    {
+        $resolver->setDefaults(array(
+            'form_type'    => null,
+            'form_options' => array(),
+            'form_data'    => null,
+            'invalid'      => null,
+            'success'      => null,
+            'request'      => null,
+        ));
     }
 }
 

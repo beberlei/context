@@ -14,6 +14,8 @@
 namespace Context\Invocation;
 
 use Context\Exception\RuntimeException;
+use Context\ParamConverter\ArgumentResolver;
+use Context\ParamConverter\ParamsArgumentResolver;
 
 /**
  * Wraps the invocation and all advices that should be applied
@@ -25,11 +27,13 @@ class ContextInvocation
 {
     private $options;
     private $advices;
+    private $resolver;
 
-    public function __construct(array $options = array(), array $advices = array())
+    public function __construct(array $options = array(), array $advices = array(), ArgumentResolver $resolver = null)
     {
-        $this->options = $options;
-        $this->advices = $advices;
+        $this->options  = $options;
+        $this->advices  = $advices;
+        $this->resolver = $resolver ?: new ParamsArgumentResolver();
     }
 
     public function getOption($name)
@@ -57,7 +61,8 @@ class ContextInvocation
         $advice = array_shift($this->advices);
 
         if ( ! $advice) {
-            throw new RuntimeException("Empty advice stack!");
+            $params = $this->resolver->resolve($this);
+            return call_user_func_array($this->options['context'], $params);
         }
 
         return $advice->around($this, $this->options);

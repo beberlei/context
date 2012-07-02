@@ -136,19 +136,23 @@ class Engine
     {
         $advices = array_merge(
             array($this->inputAdvice, $this->exceptionAdvice),
-            $this->advices,
-            array(new InvocationAdvice($this->argumentResolver))
+            $this->advices
         );
 
         $options = array_merge($this->defaultOptions, $options);
         $options = $this->resolveOptions($options, $advices);
 
-        return new Invocation\ContextInvocation($options, $advices);
+        return new Invocation\ContextInvocation($options, $advices, $this->argumentResolver);
     }
 
     private function resolveOptions(array $options, array $advices)
     {
         $resolver = new OptionsResolver();
+        $resolver->setRequired(array('context'));
+        $resolver->setDefaults(array(
+            'params' => array(),
+            'data'   => array(),
+        ));
         foreach ($advices as $advice) {
             $advice->setDefaultOptions($resolver);
         }
