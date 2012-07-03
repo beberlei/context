@@ -82,7 +82,7 @@ class ObjectConverter extends AbstractParamConverter
 
     public function getPriority()
     {
-        return 1;
+        return 3;
     }
 }
 
