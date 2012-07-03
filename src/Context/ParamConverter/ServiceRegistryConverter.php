@@ -19,7 +19,6 @@ namespace Context\ParamConverter;
 abstract class ServiceRegistryConverter extends AbstractParamConverter
 {
     abstract protected function isService($className);
-
     abstract protected function getService($className);
 
     public function supports($value, Argument $parameter, RequestData $data)
