@@ -26,7 +26,7 @@ namespace Context\ParamConverter;
  * an object. The {@see find()} method should return null if no object was
  * found.
  */
-abstract class AbstractPersistenceParamConverter extends AbstractParamConverter
+abstract class AbstractPersistenceConverter extends AbstractParamConverter
 {
     abstract protected function isPersistentClass($className);
 
