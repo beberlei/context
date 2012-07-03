@@ -73,10 +73,6 @@ class FormAdvice implements Advice
             return $invocation->invoke();
         }
 
-        $response = $invocation->invoke();
-        $data->set('form_response', $response);
-        $invocation->setOption('context', $options['success']);
-
         return $invocation->invoke();
     }
 
@@ -87,7 +83,6 @@ class FormAdvice implements Advice
             'form_options' => array(),
             'form_data'    => null,
             'invalid'      => null,
-            'success'      => null,
             'request'      => null,
         ));
     }

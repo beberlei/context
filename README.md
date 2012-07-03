@@ -17,9 +17,6 @@ that acts as translation mechanism between presentation layer and model.
 This strict seperation does not even have to lead to overengineering and non-rapid application building.
 It is very simple to build rapid prototypes on top of the context abstraction.
 
-    Note: This library is in README-driven-development. The snapshot of examples here is not yet
-    implemented fully.
-
 ## Features
 
 * Support mapping Requests (HTTP, Console, or any input for that matter) on model-request
@@ -206,17 +203,16 @@ framework you are using.
 * StringToArrayConverter - Converters a comma-seperated string into an array.
 * DateTimeConverter - Converts a string or an array into a DateTime instance.
 * ObjectConverter - Converts an array into an object by mapping keys of the array to constructor argument names, setter or public properties.
-* EventArgsConverter - Converts a request into an "EventArgs" argument to the model, containing source and data of the event.
-* ServiceConverter - Grabs requested services based on type-hint information from a service registry.
 
-There are also a generic converter related to persistence:
+There are also generic converter which plugins should override:
 
-* PersistentObjectConverter - converters an array or an identifier value into a persistent object from your storage layer.
+* AbstractPersistenceConverter - converters an array or an identifier value into a persistent object from your storage layer.
+* ServiceRegistryConverter - Grabs requested services based on type-hint information from a service registry.
 
 We ship with a set of implementations in the "Context\Plugin" namespace:
 
-* DoctrinePersistentObjectConverter
-* SymfonyUserObjectConverter
+* EntityConverter using Doctrine2 ObjectManager
+* ContainerConverter using Symfony2 DI Container
 
 ### ObjectConverter
 
@@ -279,267 +275,93 @@ An example of request arguments to make the MessageService working would be:
         )
     ));
 
-Now With the `PhpSuperGlobalsInput` you could take the parameter information from `$_POST` automatically.
+With the `PhpSuperGlobalsInput` for example you could take the parameter information from `$_POST` automatically,
+it gets filtered and validated by the struct objects.
 
 ## Plugins
 
 The plugin system acts as an AOP-layer around your model code. The model is the join-point, where additional behavior
 can be useful to add around. This additional behavior is called Advice. The following advices are general purpose
-behaviors that are very useful:
+behaviors that can be useful in your application:
 
 * Logging
 * Error Handling (and in fact the Context Exception Handler is an Advice)
-* Transactional Boundary, wrap every call into a transaction of your persistence layer
+* Transactional Boundary, wrap every call into a transaction of your persistence layer (Doctrine TransactionAdvice)
 * Parameter Converters
 * Validation/Filtering
 * (Replayable) Command Log of every action against your model
 * Authorization (Access Control)
 
-## Read-Only Example: Symfony View Request (No Context needed)
+### Doctrine Transaction Advice
 
-There are cased when you don't need context in your controllers, even if you use
-it excessively. Whenever there is no advice and no parameter-conversion necessary
-then you can just use the actual service object. This applies to many read-only
-requests.
+The Doctrine Transaction Advice wraps all calls of the context engine in a transaction using
+`$entityManager->beginTransaction()` and `$entityManager->commit()`. When an exception is thrown
+the transaction is rolled back.
 
-In this example a domain object is fetched using a service from a locator and then
-rendered as HTML page. Error handling is implemented in terms of the framework.
+At the end of a successful transaction `EntityManager#flush()` is called by the advice.
 
-    <?php
+To activate the advice you have to set 'tx' => true. In a web application you could set
+this as a default option based on HEAD/GET or other requests methods automatically.
 
-    class UserController extends Controller
+*Benefit:* With this Advice you can avoid to inject the EntityManager into your model layer.
+This allows for a perfect seperation of your business logic and the transactional semantics
+of a database.
+
+### Symfony Form Advice
+
+The Symfony Form Advice helps you handle Symfony forms with Context. A typical symfony form
+workflow has three important blocks of code:
+
+1. The business logic to execute when an object is updated/created.
+2. The failure block when your model is not valid and has to be re-displayed.
+3. The success block when model is valid and a redirect+flash messages happen.
+
+In "Context" the first bullet point is part of the model and the other two are part
+of the application/UI logic. Generic seperation of these three concerns is not very easy
+but possible.
+
+The Symfony Advice allows you to register an alternative context callbacks which is executed
+in the event of model validation failure. The 'context' is called only if the
+form is valid.
+
+    class CalculactorController
     {
-        public function viewAction($id)
+        public function statisticsAction()
         {
-            $em = $this->container->get('doctrine.orm.default_entity_manager');
-            $user = $em->find('MyApplication\Entity\User', $id);
-
-            if ( ! $user) {
-                throw $this->createNotFoundException();
-            }
-
-            return $this->render('MyApplicationBundle:User:view.html.twig', array(
-                'user' => $user
+            $engine = $this->getContextEngine();
+            $result = $engine->execute(array(
+                'context' => array($calculator, 'statistics'),
+                'type'    => new NumberType(),
+                'failure' => array($this, 'statisticsFormAction'),
             ));
+
+            $this->get('flash')->setFlash('notice', 'yay!');
+            $this->redirect($this->generateUrl('route'));
+        }
+
+        public function statisticsFormAction(Form $form, MyObject $data)
+        {
+            return array('form' => $form->createView(), 'object' => $data);
         }
     }
 
-In this example there is absolutely no abstraction between model, persistence and controller.
-To achieve some way of abstraction the Doctrine Entity Manager has to be hidden behind
-behind a persistent-ignorant interface and a Doctrine implementation:
+This advice is only executed when the Symfony Request is 'POST' and the
+content-type is 'application/x-www-form-urlencoded' or 'form/multipart'.
 
-    <?php
-    interface UserRepositoryInterface
-    {
-        /**
-         * @throws UserNotFoundException
-         * @return User
-         */
-        function find($id);
-    }
+If you use the `InstanceConverter` ParamConverter the Form and Data
+of the form get injected using typehints. Otherwise you can use the `form`
+and `form_data` variable names to have access to this parameters.
 
-    class DoctrineUserRepository implements UserRepositoryInterface
-    {
-        private $em; // constructor omitted
+*Benefit:* This advice lets you use Symfony forms and integrate them into
+calls against your model layer. You should never use domain objects as
+the form models but attach the Request Model (Struct) objects.
 
-        public function find($id)
-        {
-            $user = $this->em->find('MyApplication\Entity\User', $id);
+### Symfony JMS Serializer Converter
 
-            if ( ! $user) {
-                throw new UserNotFoundException($id);
-            }
+If you are using JMSSerializerBundle you can have Context Engine convert
+the raw request body to an object.
 
-            return $user;
-        }
-    }
+For this to work the "Content-Type" header has to be something with xml
+or json to set the format and the data has to be in the request body.
 
-The controller could then be rewritten to this simple bit:
-
-    <?php
-
-    class UserController extends Controller
-    {
-        public function viewAction($id)
-        {
-            $repository = $this->container->get('user_repository'); // our service
-
-            return $this->render('MyApplicationBundle:User:view.html.twig', array(
-                'user' => $repository->find($id)
-            ));
-        }
-    }
-
-The only thing missing here is the conversion of UserNotFoundException into
-Symfony `NotFoundException`. So we actually need a very leightweight invocation
-through Context:
-
-    <?php
-
-    class MySymfonyExceptionHandler implements ExceptionHandler
-    {
-        public function catch(Exception $e)
-        {
-            if ($e instanceof UserNotFoundException) {
-                throw NotFoundHttpException;
-            }
-        }
-    }
-
-    class UserController extends Controller
-    {
-        public function viewAction($id)
-        {
-            $repository = $this->container->get('user_repository'); // our service
-
-            return $this->render('MyApplicationBundle:User:view.html.twig', array(
-                'user' => $this->executeContext(array(
-                    'context' => array($repository, 'find'),
-                    array($id)
-                 ))
-            ));
-        }
-
-        // reusable parts in your framework
-        public function executeContext(array $params)
-        {
-            return $this->getContextEngine()->execute($params);
-        }
-
-        public function getContextEngine()
-        {
-            $engine = new \Context\Engine;
-            $engine->addExceptionHandler(new MySymfonyExceptionHandler());
-            return $engine;
-        }
-    }
-
-## Complex Example: Symfony Form
-
-Lets formulate the default "handle a form" in Symfony2 into "context"
-
-Here the "Symfony approved" way, an example from the documentation:
-
-    <?php
-
-    class RegistrationController extends Controller
-    {
-        public function registerAction()
-        {
-            $user = new User();
-            $form = $this->createForm(new UserType(), $user);
-            $request = $this->getRequest();
-
-            if ($request->getMethod() == 'POST') {
-                $form->bindRequest($request);
-
-                if ($form->isValid()) {
-                    // do much more work here regarding registration.
-
-                    $entityManager = $this->get('doctrine.orm.default_entity_manager');
-                    $entityManager->persist($user);
-                    $entityManager->flush();
-
-                    $mailer = $this->get('mailer');
-                    $mailer->send(...);
-
-                    $session = $this->get('session');
-                    $session->getFlashBag()->add('success', 'You have registered!');
-
-                    return $this->redirect($this->generateUrl('someroute'));
-                }
-            }
-
-            return $this->render(
-                'Bundle:Registration:register.html.twig',
-                array('form' => $form->createView())
-            );
-        }
-    }
-
-Model and Controller are so tightly coupled here its hard to take them apart. The use-case is validating
-and creating a new user. So a method minus the controller/view/transactional clutter would look like:
-
-    <?php
-
-    class RegisterUserContext
-    {
-        public function execute(User $candidate)
-        {
-            // do much more work here regarding registration.
-            $this->entityManager->persist($candidate);
-
-            return $candidate;
-        }
-    }
-
-The form handling of the controller contains generic-reusable code for all forms in your application.
-There is no need to write this kind of code more than once. Lets implement an advice, that converts
-a form type into its data object and injects it into the parameters.
-
-    <?php
-    class SymfonyFormAdvice implements Advice
-    {
-        public function around(ContextInvocation $context)
-        {
-            $options = $invocation->getOptions();
-            $data    = $options['data'];
-            $form    = $this->formFactory->createForm($options['formType'], $options['formData'], $options['formOptions']);
-
-            $form->bindRequest($options['request']);
-            $data->set('form', $form);
-            $data->set('formData', $form->getData());
-
-            if ( ! $form->isValid()) {
-                $invocation->setOption('context', $options['invalid']);
-
-                return $invocation->invoke();
-            }
-
-            $response = $invocation->invoke();
-            $data->set('form_response', $response);
-            $invocation->setOption('context', $options['success']);
-
-            return $invocation->invoke();
-        }
-    }
-
-The transactional code for a Doctrine EntityManager can be wrapped
-into a plugin that surrounds the whole command execution.
-
-The controller then becomes an invocating of the context, using
-closures as event:
-
-    <?php
-    class RegistrationController
-    {
-        public function registerActionSuccess($user)
-        {
-            $mailer = $controller->get('mailer');
-            $mailer->send(...);
-
-            $session = $controller->get('session');
-            $session->getFlashBag()->add('success', 'You have registered!');
-
-            return $this->redirect($controller->generateUrl('someroute'));
-        }
-
-        public function registerActionFailure($form)
-        {
-            return $this->render(
-                'Bundle:Registration:register.html.twig',
-                array('form' => $form->createView())
-            );
-        }
-
-        public function registerAction()
-        {
-            return $this->executeContext(array(
-                'context'  => array(new RegisterUserContext(), 'execute'),
-                'formType' => new UserType(),
-                'success'  => array($this, 'registerSuccess'),
-                'failure'  => array($this, 'registerActionFailure'),
-            ));
-        }
-    }
-
+*Benefit:* Lets you easily map REST requet bodies to your model parameters.
