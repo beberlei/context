@@ -135,36 +135,39 @@ Parameters are assigned to the 'statistics' function based on the positional arg
 to the script:
 
     <?php
+    // see examples/calculator/argv.php
     $engine = new \Context\Engine();
-    $engine->addInput(new \Context\Input\ArgvInput());
+    $engine->addParamConverter(new \Context\ParamConverter\StringToArrayConverter());
+    $engine->addInputSource(new \Context\Input\ArgvInput());
 
-    $stats   = $engine->execute(array(
+    $stats = $engine->execute(array(
         'context' => array($calculator, 'statistics'),
     ));
 
+    var_dump($stats);
+
 The 'statistics' method only takes one argument, an array. How can we pass the array
-on the command-line? Two options seem possible:
+on the command-line? The StringToArrayConverter allows us to call this script with:
 
-1. Comma-seperated list: "1,2,3,4,5,6"
-2. Multiple Opt-Arguments with the same name: --numbers 1 --numbers 2
+    php examples/calculator/argv.php "1,2,3,4"
 
-Lets see how this looks in code:
-
-    <?php
-    $engine = new \Context\Engine();
-    $engine->addParamConverter(new \Context\ParamConverter\CommaSeperatedListConverter());
-
-Or for the second:
+If we want multiple options instead we can use the "GetOptInput" source:
 
     <?php
+    // see examples/calculator/getopt.php
     $engine = new \Context\Engine();
-    $engine->addInput(new \Context\Input\GetOptInput());
+    $engine->addParamConverter(new \Context\ParamConverter\StringToArrayConverter());
+    $engine->addInputSource(new \Context\Input\GetOptInput());
 
-    $stats   = $engine->execute(array(
-        'context'      => array($calculator, 'statistics'),
-        'shortOptions' => "n:",
-        "longOptions"  => array("number:"),
+    $stats = $engine->execute(array(
+        'context' => array($calculator, 'statistics'),
+        'shortOptions' => '',
+        'longOptions' => array('numbers:'),
     ));
+
+Call this script with:
+
+    php examples/calculator/getopt.php --numbers 1 --numbers 2 --numbers 3 --numbers 4
 
 There are two concepts at work inside the Context Engine, when a request model is created
 from application inputs:
@@ -180,9 +183,8 @@ from application inputs:
 There are some default input sources shipped with Context:
 
 * PhpSuperGlobalsInput
-* SessionInput
 * ArgvInput
-* GetoptInput
+* GetOptInput
 
 Input sources can be much more powerful, by using the request information
 of your application framework. Input Sources could be:
@@ -192,13 +194,16 @@ of your application framework. Input Sources could be:
 * SOAP
 * Mail Pipes
 
+The RequestData can be array paramters with key-value pairs, raw data or both.
+These RequestData information is then available to the ParamConverters.
+
 ## Parameter Converters
 
 There are several parameter converts that ship with Context, however the power of Context
 can only be leveraged when you write your own converters, specific to the application
 framework you are using.
 
-* CommaSeperatedListConverter - Converters a comma-seperated string into an array.
+* StringToArrayConverter - Converters a comma-seperated string into an array.
 * DateTimeConverter - Converts a string or an array into a DateTime instance.
 * ObjectConverter - Converts an array into an object by mapping keys of the array to constructor argument names, setter or public properties.
 * EventArgsConverter - Converts a request into an "EventArgs" argument to the model, containing source and data of the event.

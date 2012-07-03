@@ -45,7 +45,7 @@ class InputAdvice implements Advice
         $options = $context->getOptions();
 
         if (empty($options['data'])) {
-            $options['data'] = $this->extractDataFromSources();
+            $options['data'] = $this->extractDataFromSources($options);
         }
 
         $context->setOptions($options);
@@ -53,11 +53,11 @@ class InputAdvice implements Advice
         return $context->invoke();
     }
 
-    private function extractDataFromSources()
+    private function extractDataFromSources($options)
     {
         foreach ($this->sources as $source) {
-            if ($source->hasData()) {
-                return $source->createData($options['data']);
+            if ($source->hasData($options)) {
+                return $source->createData($options);
             }
         }
 

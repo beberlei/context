@@ -23,7 +23,8 @@ use Context\Input\InputAdvice;
 use Context\Input\InputSource;
 
 use Context\ParamConverter\ArgumentResolver;
-use Context\ParamConverter\ParamsArgumentResolver;
+use Context\ParamConverter\ConverterArgumentResolver;
+use Context\ParamConverter\ParamConverter;
 
 use Context\Plugins\ExceptionHandler\ExceptionAdvice;
 
@@ -55,7 +56,7 @@ class Engine
     {
         $this->inputAdvice     = $inputAdvice ?: new InputAdvice();
         $this->exceptionAdvice = $exAdvice ?: new ExceptionAdvice();
-        $this->resolver        = $resolver ?: new ParamsArgumentResolver();
+        $this->resolver        = $resolver ?: new ConverterArgumentResolver();
     }
 
     /**
@@ -83,7 +84,7 @@ class Engine
      */
     public function addInputSource(InputSource $source)
     {
-        $this->inputAdice->addSource($source);
+        $this->inputAdvice->addSource($source);
     }
 
     /**
@@ -118,7 +119,7 @@ class Engine
      */
     public function addParamConverter(ParamConverter $converter)
     {
-        $this->resolver->addParamConverter($converter);
+        $this->resolver->addConverter($converter);
     }
 
     /**
@@ -142,7 +143,7 @@ class Engine
         $options = array_merge($this->defaultOptions, $options);
         $options = $this->resolveOptions($options, $advices);
 
-        return new Invocation\ContextInvocation($options, $advices, $this->argumentResolver);
+        return new Invocation\ContextInvocation($options, $advices, $this->resolver);
     }
 
     private function resolveOptions(array $options, array $advices)

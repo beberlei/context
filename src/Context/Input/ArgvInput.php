@@ -14,11 +14,22 @@
 namespace Context\Input;
 
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Context\ParamConverter\RequestData;
 
-interface InputSource
+class ArgvInput implements InputSource
 {
-    function hasData(array $options);
-    function createData(array $options);
-    function addDefaultOptions(OptionsResolverInterface $resolver);
+    public function hasData(array $options)
+    {
+        return php_sapi_name() === 'cli' && isset($_SERVER['argv']);
+    }
+
+    public function createData(array $options)
+    {
+        return new RequestData(array_slice($_SERVER['argv'], 1), null);
+    }
+
+    public function addDefaultOptions(OptionsResolverInterface $resolver)
+    {
+    }
 }
 

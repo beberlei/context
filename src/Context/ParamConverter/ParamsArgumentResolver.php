@@ -23,6 +23,12 @@ class ParamsArgumentResolver implements ArgumentResolver
     public function resolve(ContextInvocation $invocation)
     {
         $options = $invocation->getOptions();
+        if (empty($options['params']) && $options['data']) {
+            for ($i = 0; $options['data']->has($i); $i++) {
+                $options['params'][$i] = $options['data']->get($i);
+            }
+        }
+
         return $options['params'];
     }
 }
