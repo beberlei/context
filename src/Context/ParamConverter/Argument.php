@@ -26,11 +26,11 @@ class Argument
     private $isOptional;
     private $defaultValue;
 
-    static public function fromReflection(ReflectionParameter $param)
+    static public function fromReflection(ReflectionParameter $param, $className = null)
     {
         return new self(
             $param->getName(),
-            $param->getClass() ? $param->getClass()->getName() : null,
+            $param->getClass() ? $param->getClass()->getName() : $className,
             $param->isArray(),
             $param->isOptional(),
             $param->isOptional() ? $param->getDefaultValue() : null
@@ -44,6 +44,11 @@ class Argument
         $this->isArray      = $isArray;
         $this->isOptional   = $isOptional;
         $this->defaultValue = $defaultValue;
+    }
+
+    public function setClass($className)
+    {
+        $this->class = $className;
     }
 
     public function getName()

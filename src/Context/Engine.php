@@ -151,8 +151,10 @@ class Engine
         $resolver = new OptionsResolver();
         $resolver->setRequired(array('context'));
         $resolver->setDefaults(array(
-            'params' => array(),
-            'data'   => array(),
+            'params'     => array(),
+            'data'       => array(),
+            'interfaces' => array(),
+            'arguments'  => array(),
         ));
         foreach ($advices as $advice) {
             $advice->setDefaultOptions($resolver);

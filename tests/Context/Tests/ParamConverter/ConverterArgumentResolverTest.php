@@ -3,6 +3,8 @@
 namespace Context\Tests\ParamConverter;
 
 use Context\ParamConverter\ConverterArgumentResolver;
+use Context\ParamConverter\ObjectConverter;
+use Context\ParamConverter\Argument;
 use Context\Invocation\ContextInvocation;
 use Context\Tests\TestCase;
 
@@ -12,9 +14,11 @@ class ConverterArgumentResolverTest extends TestCase
     {
         $invocation = new ContextInvocation();
         $invocation->setOptions(array(
-            'context' => array(new ConverterService(), 'execute'),
-            'params'  => array(),
-            'data'    => array(),
+            'context'    => array(new ConverterService(), 'execute'),
+            'params'     => array(),
+            'data'       => array(),
+            'interfaces' => array(),
+            'arguments'  => array(),
         ));
 
         $resolver = new ConverterArgumentResolver();
@@ -27,9 +31,11 @@ class ConverterArgumentResolverTest extends TestCase
     {
         $invocation = new ContextInvocation();
         $invocation->setOptions(array(
-            'context' => array(new ConverterService(), 'withParam'),
-            'params'  => array(),
-            'data'    => array(),
+            'context'    => array(new ConverterService(), 'withParam'),
+            'params'     => array(),
+            'data'       => array(),
+            'interfaces' => array(),
+            'arguments'  => array(),
         ));
 
         $converter = $this->mock('Context\ParamConverter\ParamConverter');
@@ -49,9 +55,11 @@ class ConverterArgumentResolverTest extends TestCase
     {
         $invocation = new ContextInvocation();
         $invocation->setOptions(array(
-            'context' => array(new ConverterService(), 'withParam'),
-            'params'  => array(),
-            'data'    => array(),
+            'context'    => array(new ConverterService(), 'withParam'),
+            'params'     => array(),
+            'data'       => array(),
+            'interfaces' => array(),
+            'arguments'  => array(),
         ));
 
         $converter1 = $this->mock('Context\ParamConverter\ParamConverter');
@@ -71,7 +79,44 @@ class ConverterArgumentResolverTest extends TestCase
         $params   = $resolver->resolve($invocation);
 
         $this->assertEquals(array('baz'), $params);
+    }
 
+    public function testResolveInterfaces()
+    {
+        $invocation = new ContextInvocation();
+        $invocation->setOptions(array(
+            'context'    => array(new ConverterService(), 'withInterface'),
+            'params'     => array(array()),
+            'data'       => array(),
+            'interfaces' => array(__NAMESPACE__ . '\\ConverterInterface' => __NAMESPACE__ . '\\ConverterInterfaceImpl'),
+            'arguments'  => array(),
+        ));
+
+        $resolver = new ConverterArgumentResolver();
+        $resolver->addConverter(new ObjectConverter());
+        $params   = $resolver->resolve($invocation);
+
+        $this->assertInstanceOf(__NAMESPACE__ . '\\ConverterInterfaceImpl', $params[0]);
+    }
+
+    public function testResolveArgument()
+    {
+        $invocation = new ContextInvocation();
+        $invocation->setOptions(array(
+            'context'    => array(new ConverterService(), 'withInterface'),
+            'params'     => array(array()),
+            'data'       => array(),
+            'interfaces' => array(),
+            'arguments'  => array(
+                new Argument('arg1', __NAMESPACE__ . '\\ConverterInterfaceImpl')
+            ),
+        ));
+
+        $resolver = new ConverterArgumentResolver();
+        $resolver->addConverter(new ObjectConverter());
+        $params   = $resolver->resolve($invocation);
+
+        $this->assertInstanceOf(__NAMESPACE__ . '\\ConverterInterfaceImpl', $params[0]);
     }
 }
 
@@ -84,4 +129,17 @@ class ConverterService
     public function withParam($foo)
     {
     }
+
+    public function withInterface(ConverterInterface $arg1)
+    {
+    }
 }
+
+interface ConverterInterface
+{
+}
+
+class ConverterInterfaceImpl implements ConverterInterface
+{
+}
+

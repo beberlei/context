@@ -38,10 +38,12 @@ class ConverterArgumentResolver implements ArgumentResolver
 
     public function resolve(ContextInvocation $invocation)
     {
-        $options = $invocation->getOptions();
-        $context = $options['context'];
-        $params  = $options['params'];
-        $data    = $options['data'];
+        $options    = $invocation->getOptions();
+        $context    = $options['context'];
+        $params     = $options['params'];
+        $data       = $options['data'];
+        $args       = $options['arguments'];
+        $interfaces = $options['interfaces'];
 
         if (is_string($data)) {
             $data = new RequestData(array(), $data);
@@ -68,8 +70,14 @@ class ConverterArgumentResolver implements ArgumentResolver
 
         foreach ($r->getParameters() as $parameter) {
             $pos      = $parameter->getPosition();
-            $argument = Argument::fromReflection($parameter);
+            $argument = isset($args[$pos])
+                ? $args[$pos]
+                : Argument::fromReflection($parameter);
             $class    = $argument->getClass();
+
+            if (isset($interfaces[$class])) {
+                $argument->setClass($interfaces[$class]);
+            }
 
             if ($class && $params[$pos] instanceof $class) {
                 continue;
