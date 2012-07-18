@@ -27,14 +27,7 @@ class RequestInput implements InputSource
 
     public function createData(array $options)
     {
-        $contentType = $options['request']->headers->get('Content-Type');
-        $format      = null;
-
-        if (strpos($contentType, "/xml") !== false) {
-            $format = "xml";
-        } else if (strpos($contentType, "application/json") !== false) {
-            $format = "json";
-        }
+        $format = $options['request']->getContentType();
 
         $params = array_merge(
             $options['request']->query->all(),

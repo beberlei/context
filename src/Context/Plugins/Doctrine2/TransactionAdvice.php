@@ -43,7 +43,7 @@ class TransactionAdvice implements Advice
 
     public function around(ContextInvocation $context)
     {
-        if (!$context->getOption('tx')) {
+        if ( ! $context->getOption('tx')) {
             return $context->invoke();
         }
 

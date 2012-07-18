@@ -123,6 +123,19 @@ class Engine
     }
 
     /**
+     * Wrap service
+     *
+     * @param object $service
+     * @param array $options
+     *
+     * @return object
+     */
+    public function wrap($service, array $options)
+    {
+        return new Proxy($this, $service, $options);
+    }
+
+    /**
      * Execute a context from within the Engine.
      *
      * @param array $options
