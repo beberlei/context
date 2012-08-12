@@ -1,3 +1,21 @@
+## DEPRECATED
+
+This library was trying to implement a nice way to implement the boundary
+between application/UI and business model. It fails in my opinion, because
+it offers no general theme and no guidance as to why this is useful this
+exact way.
+
+One concept that I did take away from this is service wrapping, for transactional
+needs for example. This Gist shows the concept of a Transactional Doctrine ORM
+Service Proxy: https://gist.github.com/3272909
+
+It is easier to implement this yourself in your code as explicit application
+boundary, rather than to use a generic library like Context though.
+
+If you want to take a look at a much more strict approach to provide a boundary
+between UI/App and Model, take a look at what could be called a successor library
+[LiteCQRS](https://github.com/beberlei/litecqrs-php).
+
 # Context
 
 Small PHP library to help you shield your business-rules from the
